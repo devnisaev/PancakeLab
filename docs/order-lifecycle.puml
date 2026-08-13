@@ -1,0 +1,19 @@
+@startuml
+title Order lifecycle
+
+[*] --> CREATED : createOrder
+
+CREATED --> CREATED : addPancake\naddIngredient\nremovePancakes
+CREATED --> COMPLETED : completeOrder
+CREATED --> CANCELLED : cancelOrder
+
+COMPLETED --> PREPARED : prepareOrder
+COMPLETED --> CANCELLED : cancelOrder
+
+PREPARED --> DELIVERED : deliverOrder
+PREPARED --> CANCELLED : cancelOrder
+
+CANCELLED --> [*] : removed from store
+DELIVERED --> [*] : removed from store
+
+@enduml

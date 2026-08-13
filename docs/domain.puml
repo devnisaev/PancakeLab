@@ -1,0 +1,85 @@
+@startuml
+title Pancake Lab
+
+package "org.pancakelab.service" {
+  class PancakeService {
+    + createOrder(building, room): UUID
+    + addPancake(orderId): int
+    + addIngredient(orderId, ingredient)
+    + addIngredient(orderId, pancakeId, ingredient)
+    + viewOrder(orderId): List<String>
+    + removePancakes(description, orderId, count)
+    + completeOrder(orderId)
+    + cancelOrder(orderId)
+    + prepareOrder(orderId)
+    + deliverOrder(orderId): DeliveryResult
+  }
+  class OrderLog
+  class DeliveryResult <<DTO>> {
+    orderId: UUID
+    building: int
+    room: int
+    pancakes: List<String>
+  }
+}
+
+package "org.pancakelab.exception" {
+  class InvalidLocationException
+  class UnknownIngredientException
+  class OrderNotFoundException
+  class IllegalOrderStateException
+}
+
+package "org.pancakelab.enums" {
+  enum OrderStatus {
+    CREATED
+    COMPLETED
+    PREPARED
+    DELIVERED
+    CANCELLED
+  }
+}
+
+package "org.pancakelab.model" {
+  class Order {
+    - id: UUID
+    - status: OrderStatus
+    + addPancake(): int
+    + addIngredient(pancakeId, ingredient)
+    + complete()
+    + prepare()
+    + cancel()
+  }
+  class Pancake {
+    - id: int
+    + addIngredient(ingredient)
+    + description(): String
+  }
+  class Ingredient
+  class Location
+  class IngredientCatalog
+  class BuildingRegistry
+}
+
+PancakeService --> Order : stores
+PancakeService --> IngredientCatalog
+PancakeService --> BuildingRegistry
+PancakeService --> OrderLog
+PancakeService ..> DeliveryResult : returns
+Order *-- Pancake
+Order *-- Location
+Order --> OrderStatus
+Pancake *-- Ingredient
+IngredientCatalog ..> Ingredient : allowlists
+BuildingRegistry ..> Location : validates
+PancakeService ..> InvalidLocationException
+PancakeService ..> UnknownIngredientException
+PancakeService ..> OrderNotFoundException
+PancakeService ..> IllegalOrderStateException
+
+note right of PancakeService
+  Client API. Does not return Order,
+  Pancake, or Ingredient.
+end note
+
+@enduml
