@@ -25,9 +25,13 @@ public class PancakeService {
         this(BuildingRegistry.dojoCampus(), IngredientCatalog.standard());
     }
 
-    public PancakeService(BuildingRegistry buildings, IngredientCatalog ingredients) {
+    PancakeService(BuildingRegistry buildings, IngredientCatalog ingredients) {
         this.buildings = Objects.requireNonNull(buildings, "buildings");
         this.ingredients = Objects.requireNonNull(ingredients, "ingredients");
+    }
+
+    public List<String> listMenu() {
+        return ingredients.names();
     }
 
     public UUID createOrder(int building, int room) {

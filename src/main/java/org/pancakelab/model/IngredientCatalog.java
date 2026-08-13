@@ -49,4 +49,8 @@ public final class IngredientCatalog {
         }
         return ingredient;
     }
+
+    public List<String> names() {
+        return byNormalizedName.values().stream().map(Ingredient::name).toList();
+    }
 }

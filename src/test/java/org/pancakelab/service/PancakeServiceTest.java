@@ -100,6 +100,17 @@ class PancakeServiceTest {
     }
 
     @Test
+    void menuListsAllowedIngredientsAndExcludesMustard() {
+        List<String> menu = pancakeService.listMenu();
+
+        assertTrue(menu.contains("dark chocolate"));
+        assertTrue(menu.contains("milk chocolate"));
+        assertTrue(menu.contains("whipped cream"));
+        assertFalse(menu.contains("mustard"));
+        assertThrows(UnsupportedOperationException.class, () -> menu.add("mustard"));
+    }
+
+    @Test
     void mustardIsRejected() {
         pancakeService.addPancake(orderId);
         UnknownIngredientException exception = assertThrows(

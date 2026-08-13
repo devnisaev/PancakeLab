@@ -4,6 +4,7 @@ title Pancake Lab
 package "org.pancakelab.service" {
   class PancakeService {
     + createOrder(building, room): UUID
+    + listMenu(): List<String>
     + addPancake(orderId): int
     + addIngredient(orderId, ingredient)
     + addIngredient(orderId, pancakeId, ingredient)
