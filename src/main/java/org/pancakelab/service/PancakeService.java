@@ -3,10 +3,10 @@ package org.pancakelab.service;
 import org.pancakelab.enums.OrderStatus;
 import org.pancakelab.exception.IllegalOrderStateException;
 import org.pancakelab.exception.OrderNotFoundException;
-import org.pancakelab.model.BuildingRegistry;
-import org.pancakelab.model.IngredientCatalog;
-import org.pancakelab.model.Location;
-import org.pancakelab.model.Order;
+import org.pancakelab.domain.BuildingRegistry;
+import org.pancakelab.domain.IngredientCatalog;
+import org.pancakelab.domain.Location;
+import org.pancakelab.domain.Order;
 
 import java.util.List;
 import java.util.Objects;

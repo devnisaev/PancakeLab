@@ -1,4 +1,4 @@
-package org.pancakelab.model;
+package org.pancakelab.domain;
 
 import org.pancakelab.exception.UnknownIngredientException;
 
@@ -22,7 +22,7 @@ public final class IngredientCatalog {
 
     private final Map<String, Ingredient> byNormalizedName = new LinkedHashMap<>();
 
-    public IngredientCatalog(Iterable<String> ingredients) {
+    public IngredientCatalog(List<String> ingredients) {
         for (String name : ingredients) {
             if (name == null || name.isBlank()) {
                 throw new IllegalArgumentException("Ingredient name must not be blank");

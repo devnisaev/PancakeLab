@@ -6,8 +6,8 @@ import org.pancakelab.exception.IllegalOrderStateException;
 import org.pancakelab.exception.InvalidLocationException;
 import org.pancakelab.exception.OrderNotFoundException;
 import org.pancakelab.exception.UnknownIngredientException;
-import org.pancakelab.model.BuildingRegistry;
-import org.pancakelab.model.IngredientCatalog;
+import org.pancakelab.domain.BuildingRegistry;
+import org.pancakelab.domain.IngredientCatalog;
 
 import java.util.List;
 import java.util.Set;

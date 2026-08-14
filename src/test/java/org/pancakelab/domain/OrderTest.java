@@ -1,4 +1,4 @@
-package org.pancakelab.model;
+package org.pancakelab.domain;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

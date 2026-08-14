@@ -1,4 +1,4 @@
-package org.pancakelab.model;
+package org.pancakelab.domain;
 
 import java.util.Objects;
 

@@ -41,7 +41,7 @@ package "org.pancakelab.enums" {
   }
 }
 
-package "org.pancakelab.model" {
+package "org.pancakelab.domain" {
   class Order {
     - id: UUID
     - status: OrderStatus
