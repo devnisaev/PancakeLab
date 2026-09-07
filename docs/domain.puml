@@ -2,36 +2,54 @@
 title Pancake Lab
 
 package "org.pancakelab.api" {
-  interface PancakeShop {
+  interface DiscipleOrders {
     + createOrder(building, room): UUID
     + listMenu(): List<String>
     + addPancake(orderId): int
     + addIngredient(orderId, ingredient)
-    + addIngredient(orderId, pancakeId, ingredient)
-    + viewOrder(orderId): List<String>
-    + removePancakes(description, orderId, count)
     + completeOrder(orderId)
     + cancelOrder(orderId)
+  }
+  interface Kitchen {
+    + viewOrder(orderId): List<String>
+    + listCompletedOrders(): Set<UUID>
     + prepareOrder(orderId)
+  }
+  interface DeliveryDesk {
+    + listPreparedOrders(): Set<UUID>
     + deliverOrder(orderId): DeliveryResult
   }
-  class DeliveryResult <<DTO>> {
+  interface PancakeShop
+  class OrderTicket <<DTO>> {
     orderId: UUID
     building: int
     room: int
+    status: String
     pancakes: List<String>
   }
 }
 
+package "org.pancakelab.logging" {
+  interface ShopJournal
+  class SystemShopJournal
+  class BoundedShopJournal
+  class DiscardingShopJournal
+  class Logfmt
+}
+
 package "org.pancakelab.service" {
   class PancakeService
-  class OrderLog
+  class InMemoryOrderRepository
 }
 
 package "org.pancakelab.exception" {
+  class ShopException
   class InvalidLocationException
   class UnknownIngredientException
   class OrderNotFoundException
+  class PancakeNotFoundException
+  class InvalidRemovalCountException
+  class DuplicateIngredientException
   class IllegalOrderStateException
 }
 
@@ -42,10 +60,19 @@ package "org.pancakelab.enums" {
     PREPARED
     DELIVERED
     CANCELLED
+    + allowsEditing(): boolean
+    + canTransitionTo(next): boolean
   }
 }
 
 package "org.pancakelab.domain" {
+  interface OrderRepository {
+    + save(order)
+    + withOrder(orderId, action)
+    + take(orderId, action)
+    + remove(orderId)
+    + idsWithStatus(status): Set<UUID>
+  }
   class Order {
     - id: UUID
     - status: OrderStatus
@@ -64,13 +91,22 @@ package "org.pancakelab.domain" {
   class Location
   class IngredientCatalog
   class BuildingRegistry
+  sealed interface OrderEvent
 }
 
+PancakeShop --|> DiscipleOrders
+PancakeShop --|> Kitchen
+PancakeShop --|> DeliveryDesk
 PancakeService ..|> PancakeShop
-PancakeService --> Order : stores
+PancakeService --> OrderRepository
 PancakeService --> IngredientCatalog
 PancakeService --> BuildingRegistry
-PancakeService --> OrderLog
+PancakeService --> ShopJournal
+InMemoryOrderRepository ..|> OrderRepository
+SystemShopJournal ..|> ShopJournal
+BoundedShopJournal ..|> ShopJournal
+DiscardingShopJournal ..|> ShopJournal
+Order ..> OrderEvent : records
 PancakeShop ..> DeliveryResult : returns
 Order *-- Pancake
 Order *-- Location
@@ -80,12 +116,26 @@ IngredientCatalog ..> Ingredient : allowlists
 BuildingRegistry ..> Location : validates
 PancakeService ..> InvalidLocationException
 PancakeService ..> UnknownIngredientException
-PancakeService ..> OrderNotFoundException
-PancakeService ..> IllegalOrderStateException
+OrderRepository ..> OrderNotFoundException
+Order ..> IllegalOrderStateException
+Order ..> PancakeNotFoundException
+OrderStatus ..> IllegalOrderStateException
+InvalidLocationException --|> ShopException
+UnknownIngredientException --|> ShopException
+OrderNotFoundException --|> ShopException
+PancakeNotFoundException --|> ShopException
+InvalidRemovalCountException --|> ShopException
+DuplicateIngredientException --|> ShopException
+IllegalOrderStateException --|> ShopException
 
 note right of PancakeShop
-  Client API. Does not return Order,
+  Combined client API. Does not return Order,
   Pancake, or Ingredient.
+end note
+
+note right of OrderStatus
+  Lifecycle rules live on the enum.
+  Only CREATED allows pancake edits.
 end note
 
 @enduml

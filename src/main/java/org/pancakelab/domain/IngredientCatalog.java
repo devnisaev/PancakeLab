@@ -1,5 +1,6 @@
 package org.pancakelab.domain;
 
+import org.pancakelab.exception.DuplicateIngredientException;
 import org.pancakelab.exception.UnknownIngredientException;
 
 import java.util.LinkedHashMap;
@@ -43,14 +44,32 @@ public final class IngredientCatalog {
         if (name == null || name.isBlank()) {
             throw new UnknownIngredientException(String.valueOf(name));
         }
-        Ingredient ingredient = byNormalizedName.get(Ingredient.normalize(name));
-        if (ingredient == null) {
-            throw new UnknownIngredientException(name.trim());
+        synchronized (byNormalizedName) {
+            Ingredient ingredient = byNormalizedName.get(Ingredient.normalize(name));
+            if (ingredient == null) {
+                throw new UnknownIngredientException(name.trim());
+            }
+            return ingredient;
         }
-        return ingredient;
+    }
+
+    public void add(String name) {
+        if (name == null || name.isBlank()) {
+            throw new UnknownIngredientException(String.valueOf(name));
+        }
+        String trimmed = name.trim();
+        synchronized (byNormalizedName) {
+            String key = Ingredient.normalize(trimmed);
+            if (byNormalizedName.containsKey(key)) {
+                throw new DuplicateIngredientException(trimmed);
+            }
+            byNormalizedName.put(key, new Ingredient(trimmed));
+        }
     }
 
     public List<String> names() {
-        return byNormalizedName.values().stream().map(Ingredient::name).toList();
+        synchronized (byNormalizedName) {
+            return byNormalizedName.values().stream().map(Ingredient::name).toList();
+        }
     }
 }

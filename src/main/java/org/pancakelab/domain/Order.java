@@ -2,6 +2,8 @@ package org.pancakelab.domain;
 
 import org.pancakelab.enums.OrderStatus;
 import org.pancakelab.exception.IllegalOrderStateException;
+import org.pancakelab.exception.InvalidRemovalCountException;
+import org.pancakelab.exception.PancakeNotFoundException;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -13,8 +15,10 @@ public final class Order {
     private final UUID id;
     private final Location location;
     private final List<Pancake> pancakes = new ArrayList<>();
-    private OrderStatus status = OrderStatus.CREATED;
+    private volatile OrderStatus status = OrderStatus.CREATED;
+    private volatile int version;
     private int nextPancakeId = 0;
+    private final List<OrderEvent> events = new ArrayList<>();
 
     public Order(Location location) {
         this(UUID.randomUUID(), location);
@@ -23,6 +27,7 @@ public final class Order {
     Order(UUID id, Location location) {
         this.id = Objects.requireNonNull(id, "id");
         this.location = Objects.requireNonNull(location, "location");
+        events.add(new OrderEvent.Created(id, location.building(), location.room(), 0, 0));
     }
 
     public UUID getId() {
@@ -45,15 +50,27 @@ public final class Order {
         return status;
     }
 
+    public int version() {
+        return version;
+    }
+
+    public boolean matchesStatus(OrderStatus expected) {
+        int seen = version;
+        boolean matches = status == expected;
+        return seen == version && matches;
+    }
+
     public int addPancake() {
-        requireStatus(OrderStatus.CREATED);
+        requireOpen();
         int pancakeId = nextPancakeId++;
         pancakes.add(new Pancake(pancakeId));
+        bumpVersion();
+        record(new OrderEvent.PancakeStarted(id, getBuilding(), getRoom(), pancakeId, pancakes.size(), version));
         return pancakeId;
     }
 
     public void addIngredient(Ingredient ingredient) {
-        requireStatus(OrderStatus.CREATED);
+        requireOpen();
         if (pancakes.isEmpty()) {
             throw new IllegalOrderStateException("Start a pancake before adding ingredients");
         }
@@ -61,14 +78,17 @@ public final class Order {
     }
 
     public void addIngredient(int pancakeId, Ingredient ingredient) {
-        requireStatus(OrderStatus.CREATED);
+        requireOpen();
         pancake(pancakeId).addIngredient(ingredient);
+        bumpVersion();
+        record(new OrderEvent.IngredientAdded(
+                id, getBuilding(), getRoom(), pancakeId, pancakeDescription(pancakeId), pancakes.size(), version));
     }
 
     public int removePancakes(String description, int count) {
-        requireStatus(OrderStatus.CREATED);
+        requireOpen();
         if (count <= 0) {
-            throw new IllegalArgumentException("Count must be positive");
+            throw new InvalidRemovalCountException();
         }
         Objects.requireNonNull(description, "description");
         int removed = 0;
@@ -79,6 +99,9 @@ public final class Order {
                 removed++;
             }
         }
+        bumpVersion();
+        record(new OrderEvent.PancakesRemoved(
+                id, getBuilding(), getRoom(), description, removed, pancakes.size(), version));
         return removed;
     }
 
@@ -98,38 +121,60 @@ public final class Order {
         return pancakes.stream()
                 .filter(pancake -> pancake.id() == pancakeId)
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Pancake %d does not exist".formatted(pancakeId)));
+                .orElseThrow(() -> new PancakeNotFoundException(pancakeId));
     }
 
     public void complete() {
-        requireStatus(OrderStatus.CREATED);
+        if (!status.canTransitionTo(OrderStatus.COMPLETED)) {
+            throw IllegalOrderStateException.unexpected(id, status, OrderStatus.COMPLETED);
+        }
         if (pancakes.isEmpty() || pancakes.stream().anyMatch(Pancake::isEmpty)) {
             throw new IllegalOrderStateException("Order must contain pancakes with ingredients");
         }
         status = OrderStatus.COMPLETED;
+        bumpVersion();
+        record(new OrderEvent.Completed(id, getBuilding(), getRoom(), pancakes.size(), version));
     }
 
     public void prepare() {
-        requireStatus(OrderStatus.COMPLETED);
-        status = OrderStatus.PREPARED;
+        status = status.transitionTo(OrderStatus.PREPARED, id);
+        bumpVersion();
+        record(new OrderEvent.Prepared(id, getBuilding(), getRoom(), pancakes.size(), version));
     }
 
     public void markDelivered() {
-        requireStatus(OrderStatus.PREPARED);
-        status = OrderStatus.DELIVERED;
+        status = status.transitionTo(OrderStatus.DELIVERED, id);
+        bumpVersion();
+        record(new OrderEvent.Delivered(id, getBuilding(), getRoom(), pancakes.size(), version));
     }
 
     public void cancel() {
-        if (status == OrderStatus.DELIVERED || status == OrderStatus.CANCELLED) {
-            throw IllegalOrderStateException.unexpected(id, status, OrderStatus.CREATED);
-        }
-        status = OrderStatus.CANCELLED;
+        status = status.transitionTo(OrderStatus.CANCELLED, id);
+        bumpVersion();
+        record(new OrderEvent.Cancelled(id, getBuilding(), getRoom(), pancakes.size(), version));
     }
 
-    private void requireStatus(OrderStatus expected) {
-        if (status != expected) {
-            throw IllegalOrderStateException.unexpected(id, status, expected);
+    public List<OrderEvent> drainEvents() {
+        if (events.isEmpty()) {
+            return List.of();
         }
+        List<OrderEvent> drained = List.copyOf(events);
+        events.clear();
+        return drained;
+    }
+
+    private void record(OrderEvent event) {
+        events.add(event);
+    }
+
+    private void requireOpen() {
+        if (!status.allowsEditing()) {
+            throw IllegalOrderStateException.unexpected(id, status, OrderStatus.CREATED);
+        }
+    }
+
+    private void bumpVersion() {
+        version++;
     }
 
     @Override

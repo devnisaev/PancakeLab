@@ -1,0 +1,340 @@
+---
+description: Pure Java Domain-Driven Design (DDD)
+globs:
+  - "**/*.java"
+alwaysApply: true
+---
+
+You are a Senior Java Developer.
+
+Generate code using only the Java Standard Library (Java 21+).
+
+Do NOT use:
+- Spring
+- Jakarta EE
+- JPA/Hibernate
+- Lombok
+- Guava
+- Apache Commons
+- Jackson
+- MapStruct
+- Any third-party library
+
+## Design Philosophy
+
+Model the business domain first.
+
+Business logic belongs inside the domain model.
+
+Prefer rich domain models over CRUD-style services.
+
+Follow Domain-Driven Design without introducing unnecessary complexity.
+
+## Ubiquitous Language
+
+Use business terminology consistently in:
+- class names
+- method names
+- variables
+- exceptions
+
+Avoid technical names such as:
+
+UserManager
+OrderProcessor
+EntityHelper
+Utils
+DataManager
+
+Prefer names like:
+
+Order
+Payment
+Money
+RewardAccount
+RewardTransaction
+Customer
+
+## Entities
+
+Entities have identity.
+
+They should:
+- encapsulate behavior
+- protect invariants
+- expose meaningful business methods
+- avoid public setters
+
+Example:
+
+order.pay(amount);
+
+instead of
+
+order.setStatus(Status.PAID);
+
+## Value Objects
+
+Prefer immutable Value Objects.
+
+Use Java records whenever possible.
+
+Examples:
+
+Money
+Email
+Address
+CustomerId
+OrderId
+
+Value Objects:
+- validate themselves
+- implement equality naturally
+- contain behavior
+
+## Aggregates
+
+Every Aggregate has one Aggregate Root.
+
+Only the Aggregate Root may modify internal state.
+
+Protect all business invariants.
+
+Never expose mutable collections.
+
+Return unmodifiable collections.
+
+## Domain Services
+
+Create a Domain Service only when behavior naturally belongs to multiple entities.
+
+Do not create services that simply forward method calls.
+
+## Repositories
+
+Repository is an interface only.
+
+Example:
+
+interface OrderRepository
+
+No persistence implementation unless explicitly requested.
+
+## Business Rules
+
+Business rules belong inside entities, value objects, or domain services.
+
+Never place business logic inside:
+- main()
+- repository
+- utility classes
+
+## Exceptions
+
+Create meaningful domain exceptions.
+
+Examples:
+
+InsufficientBalanceException
+
+OrderAlreadyPaidException
+
+RewardLimitExceededException
+
+Avoid generic RuntimeException.
+
+## Mutability
+
+Prefer immutable objects.
+
+Use final whenever possible.
+
+Defensive copy mutable inputs.
+
+Never expose mutable internal state.
+
+## Collections
+
+Prefer:
+
+List
+Set
+Map
+
+Return:
+
+Collections.unmodifiableList(...)
+Collections.unmodifiableSet(...)
+Collections.unmodifiableMap(...)
+
+## Java Best Practices
+
+Prefer:
+
+records
+sealed interfaces
+enums with behavior
+interfaces
+composition over inheritance
+
+Use Optional only as a return type.
+
+Avoid Optional fields.
+
+Avoid null whenever practical.
+
+## Encapsulation
+
+Fields should normally be private final.
+
+Expose behavior instead of state.
+
+Avoid getters that only support external business logic.
+
+## Methods
+
+Methods should:
+
+have one responsibility
+
+be intention revealing
+
+be small
+
+express business behavior
+
+Good:
+
+account.withdraw(money)
+
+invoice.markAsPaid()
+
+reward.redeem(points)
+
+Bad:
+
+setBalance(...)
+
+setPaid(...)
+
+setStatus(...)
+
+## Constructors
+
+Validate all invariants during construction.
+
+Never allow invalid domain objects to exist.
+
+## Equality
+
+Entities compare by identity.
+
+Value Objects compare by value.
+
+## Enums
+
+Prefer enums with behavior.
+
+Example:
+
+enum PaymentStatus {
+
+    PENDING {
+        boolean canTransitionTo(PaymentStatus next) { ... }
+    }
+
+}
+
+instead of switch statements throughout the code.
+
+## Packages
+
+Organize by business domain, not technical layers.
+
+Example:
+
+customer/
+
+order/
+
+payment/
+
+reward/
+
+shared/
+
+Avoid:
+
+service/
+
+entity/
+
+dto/
+
+model/
+
+helper/
+
+utils/
+
+## Code Style
+
+Prefer:
+
+early returns
+
+small methods
+
+meaningful names
+
+final variables
+
+clear APIs
+
+Avoid:
+
+deep nesting
+
+magic strings
+
+magic numbers
+
+long parameter lists
+
+boolean flags
+
+static utility classes containing business logic
+
+## SOLID
+
+Always follow SOLID principles.
+
+Prefer composition.
+
+Depend on abstractions.
+
+Keep classes cohesive.
+
+## Testing
+
+Design code to be easily unit tested.
+
+Avoid hidden dependencies.
+
+Inject collaborators through constructors.
+
+Avoid global mutable state.
+
+## When Generating Code
+
+Before writing code:
+
+1. Identify the domain concepts.
+2. Identify entities.
+3. Identify value objects.
+4. Identify aggregates.
+5. Identify business invariants.
+6. Design expressive APIs.
+7. Keep the implementation simple.
+8. Use only Java Standard Library.
+9. Explain important design decisions briefly.

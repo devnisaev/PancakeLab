@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.pancakelab.api.DeliveryResult;
 import org.pancakelab.exception.IllegalOrderStateException;
 import org.pancakelab.exception.InvalidLocationException;
+import org.pancakelab.exception.InvalidRemovalCountException;
 import org.pancakelab.exception.OrderNotFoundException;
+import org.pancakelab.exception.PancakeNotFoundException;
 import org.pancakelab.exception.UnknownIngredientException;
 import org.pancakelab.domain.BuildingRegistry;
 import org.pancakelab.domain.IngredientCatalog;
@@ -69,7 +71,7 @@ class PancakeServiceTddTest {
     void cannotAddIngredientToUnknownPancake() {
         UUID orderId = shop.createOrder(1, 1);
         shop.addPancake(orderId);
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(PancakeNotFoundException.class,
                 () -> shop.addIngredient(orderId, 99, "dark chocolate"));
     }
 
@@ -148,7 +150,7 @@ class PancakeServiceTddTest {
     void removePancakesRequiresPositiveCount() {
         UUID orderId = shop.createOrder(1, 1);
         addPancake(orderId, "dark chocolate");
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(InvalidRemovalCountException.class,
                 () -> shop.removePancakes("Delicious pancake with dark chocolate!", orderId, 0));
     }
 

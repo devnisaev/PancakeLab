@@ -1,6 +1,6 @@
 package org.pancakelab.exception;
 
-public class UnknownIngredientException extends IllegalArgumentException {
+public class UnknownIngredientException extends ShopException {
     public UnknownIngredientException(String ingredient) {
         super("Unknown ingredient: " + ingredient);
     }

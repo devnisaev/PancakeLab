@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.pancakelab.exception.DuplicateIngredientException;
 import org.pancakelab.exception.UnknownIngredientException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,5 +39,18 @@ class IngredientCatalogTest {
     void namesListsAllowlistedIngredientsWithoutMustard() {
         assertTrue(catalog.names().contains("dark chocolate"));
         assertFalse(catalog.names().contains("mustard"));
+    }
+
+    @Test
+    void addPutsANewIngredientOnTheMenu() {
+        catalog.add("caramel");
+        assertEquals("caramel", catalog.require(" Caramel ").name());
+        assertTrue(catalog.names().contains("caramel"));
+    }
+
+    @Test
+    void addRejectsDuplicatesAndBlanks() {
+        assertThrows(DuplicateIngredientException.class, () -> catalog.add("dark chocolate"));
+        assertThrows(UnknownIngredientException.class, () -> catalog.add("  "));
     }
 }

@@ -2,7 +2,7 @@ package org.pancakelab.exception;
 
 import java.util.UUID;
 
-public class IllegalOrderStateException extends IllegalStateException {
+public class IllegalOrderStateException extends ShopException {
     public IllegalOrderStateException(String message) {
         super(message);
     }
