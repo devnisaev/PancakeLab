@@ -1,14 +1,15 @@
 package org.pancakelab;
 
+import org.pancakelab.api.DeliveryResult;
+import org.pancakelab.api.PancakeShop;
 import org.pancakelab.exception.UnknownIngredientException;
-import org.pancakelab.service.DeliveryResult;
 import org.pancakelab.service.PancakeService;
 
 import java.util.UUID;
 
 public class Main {
     public static void main(String[] args) {
-        PancakeService shop = new PancakeService();
+        PancakeShop shop = new PancakeService();
         System.out.println("Menu: " + shop.listMenu());
         System.out.println();
 
@@ -42,14 +43,14 @@ public class Main {
         shop.cancelOrder(rejected);
     }
 
-    private static void addPancake(PancakeService shop, UUID orderId, String... ingredients) {
+    private static void addPancake(PancakeShop shop, UUID orderId, String... ingredients) {
         shop.addPancake(orderId);
         for (String ingredient : ingredients) {
             shop.addIngredient(orderId, ingredient);
         }
     }
 
-    private static void deliver(PancakeService shop, UUID orderId) {
+    private static void deliver(PancakeShop shop, UUID orderId) {
         shop.completeOrder(orderId);
         shop.prepareOrder(orderId);
         DeliveryResult delivery = shop.deliverOrder(orderId);

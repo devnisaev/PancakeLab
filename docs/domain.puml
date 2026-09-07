@@ -1,8 +1,8 @@
 @startuml
 title Pancake Lab
 
-package "org.pancakelab.service" {
-  class PancakeService {
+package "org.pancakelab.api" {
+  interface PancakeShop {
     + createOrder(building, room): UUID
     + listMenu(): List<String>
     + addPancake(orderId): int
@@ -15,13 +15,17 @@ package "org.pancakelab.service" {
     + prepareOrder(orderId)
     + deliverOrder(orderId): DeliveryResult
   }
-  class OrderLog
   class DeliveryResult <<DTO>> {
     orderId: UUID
     building: int
     room: int
     pancakes: List<String>
   }
+}
+
+package "org.pancakelab.service" {
+  class PancakeService
+  class OrderLog
 }
 
 package "org.pancakelab.exception" {
@@ -62,11 +66,12 @@ package "org.pancakelab.domain" {
   class BuildingRegistry
 }
 
+PancakeService ..|> PancakeShop
 PancakeService --> Order : stores
 PancakeService --> IngredientCatalog
 PancakeService --> BuildingRegistry
 PancakeService --> OrderLog
-PancakeService ..> DeliveryResult : returns
+PancakeShop ..> DeliveryResult : returns
 Order *-- Pancake
 Order *-- Location
 Order --> OrderStatus
@@ -78,7 +83,7 @@ PancakeService ..> UnknownIngredientException
 PancakeService ..> OrderNotFoundException
 PancakeService ..> IllegalOrderStateException
 
-note right of PancakeService
+note right of PancakeShop
   Client API. Does not return Order,
   Pancake, or Ingredient.
 end note

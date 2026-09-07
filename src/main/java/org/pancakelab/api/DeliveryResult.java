@@ -1,4 +1,4 @@
-package org.pancakelab.service;
+package org.pancakelab.api;
 
 import java.util.List;
 import java.util.UUID;

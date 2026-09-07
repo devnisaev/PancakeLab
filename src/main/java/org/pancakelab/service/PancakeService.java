@@ -1,5 +1,7 @@
 package org.pancakelab.service;
 
+import org.pancakelab.api.DeliveryResult;
+import org.pancakelab.api.PancakeShop;
 import org.pancakelab.enums.OrderStatus;
 import org.pancakelab.exception.IllegalOrderStateException;
 import org.pancakelab.exception.OrderNotFoundException;
@@ -15,7 +17,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class PancakeService {
+public class PancakeService implements PancakeShop {
     private final ConcurrentHashMap<UUID, Order> orders = new ConcurrentHashMap<>();
     private final BuildingRegistry buildings;
     private final IngredientCatalog ingredients;
@@ -30,10 +32,12 @@ public class PancakeService {
         this.ingredients = Objects.requireNonNull(ingredients, "ingredients");
     }
 
+    @Override
     public List<String> listMenu() {
-        return ingredients.names();
+        return List.copyOf(ingredients.names());
     }
 
+    @Override
     public UUID createOrder(int building, int room) {
         Location location = buildings.require(building, room);
         Order order = new Order(location);
@@ -41,6 +45,7 @@ public class PancakeService {
         return order.getId();
     }
 
+    @Override
     public int addPancake(UUID orderId) {
         Order order = requireOrder(orderId);
         synchronized (order) {
@@ -49,6 +54,7 @@ public class PancakeService {
         }
     }
 
+    @Override
     public void addIngredient(UUID orderId, String ingredient) {
         Order order = requireOrder(orderId);
         synchronized (order) {
@@ -58,6 +64,7 @@ public class PancakeService {
         }
     }
 
+    @Override
     public void addIngredient(UUID orderId, int pancakeId, String ingredient) {
         Order order = requireOrder(orderId);
         synchronized (order) {
@@ -67,14 +74,16 @@ public class PancakeService {
         }
     }
 
+    @Override
     public List<String> viewOrder(UUID orderId) {
         Order order = requireOrder(orderId);
         synchronized (order) {
             requirePresent(orderId, order);
-            return order.pancakeDescriptions();
+            return List.copyOf(order.pancakeDescriptions());
         }
     }
 
+    @Override
     public void removePancakes(String description, UUID orderId, int count) {
         Order order = requireOrder(orderId);
         synchronized (order) {
@@ -84,6 +93,7 @@ public class PancakeService {
         }
     }
 
+    @Override
     public void completeOrder(UUID orderId) {
         Order order = requireOrder(orderId);
         synchronized (order) {
@@ -92,6 +102,7 @@ public class PancakeService {
         }
     }
 
+    @Override
     public void cancelOrder(UUID orderId) {
         Order order = requireOrder(orderId);
         synchronized (order) {
@@ -102,10 +113,12 @@ public class PancakeService {
         }
     }
 
+    @Override
     public Set<UUID> listCompletedOrders() {
         return listByStatus(OrderStatus.COMPLETED);
     }
 
+    @Override
     public void prepareOrder(UUID orderId) {
         Order order = requireOrder(orderId);
         synchronized (order) {
@@ -114,10 +127,12 @@ public class PancakeService {
         }
     }
 
+    @Override
     public Set<UUID> listPreparedOrders() {
         return listByStatus(OrderStatus.PREPARED);
     }
 
+    @Override
     public DeliveryResult deliverOrder(UUID orderId) {
         Order order = requireOrder(orderId);
         synchronized (order) {
