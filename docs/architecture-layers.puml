@@ -1,0 +1,75 @@
+@startuml
+title Pancake Lab - Layered Architecture (detailed classes)
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+top to bottom direction
+
+package "Presentation\norg.pancakelab.console / Main" as presentation #E8F4FD {
+  class Main
+  class ShopKiosk
+  class KioskBoard
+}
+
+package "API\norg.pancakelab.api" as api #E8FDE8 {
+  interface DiscipleOrders
+  interface Kitchen
+  interface DeliveryDesk
+  interface PancakeShop
+  class OrderTicket <<DTO>>
+  class DeliveryResult <<DTO>>
+}
+
+package "Application\norg.pancakelab.service" as application #FFF8E8 {
+  class PancakeService <<application service>>
+  class InMemoryOrderRepository
+  class CompositeOrderEventListener
+  class KitchenBoard
+  class ShopMetrics
+}
+
+package "Domain\norg.pancakelab.domain" as domain #FDEDF8 {
+  class Order <<aggregate root>>
+  class Pancake
+  class Address <<value object>>
+  class Ingredient <<value object>>
+  class AddressRegistry <<domain service>>
+  class IngredientCatalog <<domain service>>
+  interface OrderRepository
+  interface OrderEvent <<sealed>>
+  interface OrderEventListener
+  enum OrderStatus
+}
+
+package "Infrastructure\norg.pancakelab.logging" as infrastructure #F0F0F0 {
+  interface ShopJournal
+  class SystemShopJournal
+  class BoundedShopJournal
+  class DiscardingShopJournal
+  class Logfmt
+}
+
+package "Cross-cutting\norg.pancakelab.exception / enums" as crosscutting #FAFAFA {
+  class ShopException
+  class InvalidLocationException
+  class UnknownIngredientException
+  class OrderNotFoundException
+}
+
+presentation -down-> api : uses ports and DTOs
+api -down-> application : PancakeShop implemented by
+application -down-> domain : orchestrates
+application -down-> infrastructure : publishes events to
+
+note bottom of domain
+  <b>Dependency rule:</b> outer layers depend inward.
+  Domain does not depend on console, api DTOs, or logging.
+end note
+
+note right of application
+  <b>PancakeService</b> validates input, loads aggregates
+  through the repository, drains domain events, and
+  publishes them to listeners.
+end note
+
+@enduml

@@ -9,7 +9,7 @@ import org.pancakelab.exception.InvalidRemovalCountException;
 import org.pancakelab.exception.OrderNotFoundException;
 import org.pancakelab.exception.PancakeNotFoundException;
 import org.pancakelab.exception.UnknownIngredientException;
-import org.pancakelab.domain.BuildingRegistry;
+import org.pancakelab.domain.AddressRegistry;
 import org.pancakelab.domain.IngredientCatalog;
 
 import java.util.List;
@@ -204,7 +204,7 @@ class PancakeServiceTddTest {
     @Test
     void customCatalogIsExposedOnlyAsMenuNames() {
         PancakeService limited = new PancakeService(
-                BuildingRegistry.dojoCampus(),
+                AddressRegistry.dojoCampus(),
                 new IngredientCatalog(List.of("banana", "coconut")));
 
         assertEquals(List.of("banana", "coconut"), limited.listMenu());

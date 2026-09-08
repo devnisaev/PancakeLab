@@ -1,0 +1,91 @@
+@startuml
+title Pancake Lab - Ports and Adapters (partial hexagonal)
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+rectangle "Driving side\n(primary actors)" as actors #E8F4FD {
+  actor Disciple
+  actor Chef
+  actor Delivery
+  actor Sensei
+}
+
+together {
+  component "ShopKiosk\n(console)" as kiosk
+  component "Main" as main
+}
+
+package "Ports\n(org.pancakelab.api)" as ports #E8FDE8 {
+  interface "DiscipleOrders" as portDisciple
+  interface "Kitchen" as portKitchen
+  interface "DeliveryDesk" as portDelivery
+  interface "PancakeShop" as portShop
+}
+
+package "Application core" as core #FFF8E8 {
+  component "PancakeService" as service
+}
+
+package "Domain ports" as domainPorts #FDEDF8 {
+  interface "OrderRepository" as portRepo
+  interface "OrderEventListener" as portEvents
+}
+
+package "Driven adapters" as adapters #F0F0F0 {
+  component "InMemoryOrderRepository" as repo
+  component "SystemShopJournal" as journal
+  component "BoundedShopJournal" as boundedJournal
+  component "KitchenBoard" as board
+  component "ShopMetrics" as metrics
+  component "CompositeOrderEventListener" as composite
+}
+
+package "Domain model" as model #FDEDF8 {
+  component "Order\nPancake\nAddress\n..." as aggregates
+}
+
+Disciple --> portDisciple
+Chef --> portKitchen
+Delivery --> portDelivery
+Sensei --> portShop
+
+kiosk --> portDisciple
+kiosk --> portKitchen
+kiosk --> portDelivery
+kiosk --> portShop
+main --> portShop
+
+portDisciple --> service
+portKitchen --> service
+portDelivery --> service
+portShop --> service
+
+service --> portRepo
+service --> portEvents
+service --> aggregates
+
+portRepo <|.. repo
+portEvents <|.. composite
+portEvents <|.. journal
+portEvents <|.. board
+portEvents <|.. metrics
+
+composite --> journal : optional chain
+composite --> board
+composite --> metrics
+
+repo --> aggregates
+
+note right of ports
+  Callers see UUID, List<String>, DTOs -
+  never Order, Pancake, or Ingredient.
+end note
+
+note bottom of domainPorts
+  Repository and event listener interfaces
+  live in the domain package; concrete
+  adapters live in service / logging.
+end note
+
+@enduml

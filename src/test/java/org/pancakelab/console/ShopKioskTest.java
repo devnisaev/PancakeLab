@@ -89,6 +89,31 @@ class ShopKioskTest {
         assertTrue(output.contains("Goodbye"));
     }
 
+    @Test
+    void roleSpecificPortsDriveEachScreen() {
+        PancakeService service = new PancakeService();
+        StringWriter output = new StringWriter();
+        String input = String.join("\n",
+                "1", "1", "1", "1",
+                "3", "1", "1", "",
+                "5", "1",
+                "9",
+                "2", "1",
+                "2", "1",
+                "9",
+                "3", "1",
+                "2", "1",
+                "9",
+                "0") + "\n";
+        ShopKiosk kiosk = new ShopKiosk(service, service, service, service, new StringReader(input), new PrintWriter(output, true));
+        kiosk.run();
+
+        String text = output.toString();
+        assertTrue(text.contains("Sent to the kitchen"));
+        assertTrue(text.contains("Ready for delivery"));
+        assertTrue(text.contains("Out for delivery"));
+    }
+
     private static String run(String... lines) {
         StringWriter output = new StringWriter();
         String input = String.join("\n", lines) + "\n";

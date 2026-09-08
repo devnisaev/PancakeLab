@@ -1,0 +1,59 @@
+@startuml
+title Pancake Lab - Architecture at a glance
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam nodesep 20
+skinparam ranksep 30
+top to bottom direction
+
+package "Presentation\norg.pancakelab.console / Main" as presentation #E8F4FD {
+  [Main]
+  [ShopKiosk]
+  [KioskBoard]
+}
+
+package "API / Ports\norg.pancakelab.api" as api #E8FDE8 {
+  [DiscipleOrders]
+  [Kitchen]
+  [DeliveryDesk]
+  [PancakeShop]
+  [OrderTicket / DeliveryResult]
+}
+
+package "Application\norg.pancakelab.service" as application #FFF8E8 {
+  [PancakeService]
+  [InMemoryOrderRepository]
+  [CompositeOrderEventListener]
+  [KitchenBoard]
+  [ShopMetrics]
+}
+
+package "Domain\norg.pancakelab.domain" as domain #FDEDF8 {
+  [Order]
+  [Pancake]
+  [Address]
+  [AddressRegistry]
+  [IngredientCatalog]
+  [OrderEvent]
+  [OrderRepository]
+}
+
+package "Infrastructure\norg.pancakelab.logging" as infrastructure #F0F0F0 {
+  [ShopJournal]
+  [SystemShopJournal]
+  [BoundedShopJournal]
+}
+
+presentation -down-> api
+api -down-> application
+application -down-> domain : orchestrates
+application -down-> infrastructure : publishes events
+infrastructure ..> domain : reads OrderEvent
+
+note bottom of domain
+  <b>Dependency rule:</b> outer layers depend inward.
+  Domain does not depend on console, API DTOs, or logging.
+end note
+
+@enduml

@@ -9,17 +9,17 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 public final class InMemoryOrderRepository implements OrderRepository {
-    private final ConcurrentHashMap<UUID, Order> orders = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, StoredOrder> orders = new ConcurrentHashMap<>();
 
     @Override
     public void save(Order order) {
         Objects.requireNonNull(order, "order");
-        orders.put(order.getId(), order);
+        orders.put(order.getId(), new StoredOrder(order));
     }
 
     @Override
@@ -34,7 +34,16 @@ public final class InMemoryOrderRepository implements OrderRepository {
 
     @Override
     public void remove(UUID orderId) {
-        orders.remove(orderId);
+        StoredOrder stored = orders.get(orderId);
+        if (stored == null) {
+            return;
+        }
+        stored.lock.lock();
+        try {
+            orders.remove(orderId);
+        } finally {
+            stored.lock.unlock();
+        }
     }
 
     @Override
@@ -45,6 +54,7 @@ public final class InMemoryOrderRepository implements OrderRepository {
     @Override
     public Set<UUID> idsWithStatus(OrderStatus status) {
         return orders.values().stream()
+                .map(stored -> stored.order)
                 .filter(order -> order.matchesStatus(status))
                 .map(Order::getId)
                 .collect(Collectors.toUnmodifiableSet());
@@ -52,14 +62,34 @@ public final class InMemoryOrderRepository implements OrderRepository {
 
     private <T> T mutate(UUID orderId, Function<Order, T> action, boolean remove) {
         Objects.requireNonNull(orderId, "orderId");
-        AtomicReference<T> result = new AtomicReference<>();
-        orders.compute(orderId, (id, order) -> {
-            if (order == null) {
-                throw new OrderNotFoundException(orderId);
+        StoredOrder stored = requireStored(orderId);
+        stored.lock.lock();
+        try {
+            stored = requireStored(orderId);
+            T result = action.apply(stored.order);
+            if (remove) {
+                orders.remove(orderId);
             }
-            result.set(action.apply(order));
-            return remove ? null : order;
-        });
-        return result.get();
+            return result;
+        } finally {
+            stored.lock.unlock();
+        }
+    }
+
+    private StoredOrder requireStored(UUID orderId) {
+        StoredOrder stored = orders.get(orderId);
+        if (stored == null) {
+            throw new OrderNotFoundException(orderId);
+        }
+        return stored;
+    }
+
+    private static final class StoredOrder {
+        private final Order order;
+        private final ReentrantLock lock = new ReentrantLock();
+
+        private StoredOrder(Order order) {
+            this.order = Objects.requireNonNull(order, "order");
+        }
     }
 }

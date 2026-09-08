@@ -1,23 +1,18 @@
 package org.pancakelab.console;
 
-import org.pancakelab.api.OrderTicket;
-import org.pancakelab.api.PancakeShop;
+import org.pancakelab.api.*;
 import org.pancakelab.exception.ShopException;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.UncheckedIOException;
-import java.io.Writer;
+import java.io.*;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
 public final class ShopKiosk {
+    private final DiscipleOrders disciple;
+    private final Kitchen kitchen;
+    private final DeliveryDesk delivery;
     private final PancakeShop shop;
     private final BufferedReader in;
     private final PrintWriter out;
@@ -26,11 +21,34 @@ public final class ShopKiosk {
     private boolean running = true;
 
     public ShopKiosk(PancakeShop shop, InputStream input, OutputStream output) {
-        this(shop, new InputStreamReader(input), new PrintWriter(output, true));
+        this(shop, shop, shop, shop, input, output);
     }
 
     ShopKiosk(PancakeShop shop, Reader input, Writer output) {
-        this.shop = shop;
+        this(shop, shop, shop, shop, input, output);
+    }
+
+    public ShopKiosk(
+            DiscipleOrders disciple,
+            Kitchen kitchen,
+            DeliveryDesk delivery,
+            PancakeShop shop,
+            InputStream input,
+            OutputStream output) {
+        this(disciple, kitchen, delivery, shop, new InputStreamReader(input), new PrintWriter(output, true));
+    }
+
+    ShopKiosk(
+            DiscipleOrders disciple,
+            Kitchen kitchen,
+            DeliveryDesk delivery,
+            PancakeShop shop,
+            Reader input,
+            Writer output) {
+        this.disciple = Objects.requireNonNull(disciple, "disciple");
+        this.kitchen = Objects.requireNonNull(kitchen, "kitchen");
+        this.delivery = Objects.requireNonNull(delivery, "delivery");
+        this.shop = Objects.requireNonNull(shop, "shop");
         this.in = input instanceof BufferedReader buffered ? buffered : new BufferedReader(input);
         this.out = output instanceof PrintWriter writer ? writer : new PrintWriter(output, true);
         this.board = new KioskBoard(this.out);
@@ -52,8 +70,8 @@ public final class ShopKiosk {
         switch (screen) {
             case HOME -> home();
             case ORDER -> orderDesk();
-            case KITCHEN -> kitchen();
-            case DELIVERY -> delivery();
+            case KITCHEN -> kitchenScreen();
+            case DELIVERY -> deliveryScreen();
             case MENU -> menuBoard();
         }
     }
@@ -96,7 +114,7 @@ public final class ShopKiosk {
         }
     }
 
-    private void kitchen() {
+    private void kitchenScreen() {
         board.menu("Kitchen",
                 "1) View completed queue",
                 "2) Prepare order",
@@ -109,7 +127,7 @@ public final class ShopKiosk {
         }
     }
 
-    private void delivery() {
+    private void deliveryScreen() {
         board.menu("Delivery",
                 "1) View ready orders",
                 "2) Deliver order",
@@ -128,7 +146,7 @@ public final class ShopKiosk {
                 "2) Add ingredient",
                 "9) Back");
         switch (choice()) {
-            case "1" -> board.ingredients(shop.listMenu());
+            case "1" -> board.ingredients(disciple.listMenu());
             case "2" -> addIngredientToMenu();
             case "9" -> screen = Screen.HOME;
             default -> board.notice("Unknown choice");
@@ -138,7 +156,7 @@ public final class ShopKiosk {
     private void placeOrder() {
         int building = readInt("Building: ");
         int room = readInt("Room: ");
-        shop.createOrder(building, room);
+        disciple.createOrder(building, room);
         board.success("Order opened  ·  building " + building + ", room " + room);
     }
 
@@ -148,10 +166,10 @@ public final class ShopKiosk {
             return;
         }
         UUID orderId = selected.get();
-        shop.addPancake(orderId);
-        board.ingredients(shop.listMenu());
+        disciple.addPancake(orderId);
+        board.ingredients(disciple.listMenu());
         addToppings(orderId);
-        board.items("Your order", shop.viewOrder(orderId));
+        board.items("Your order", disciple.viewOrder(orderId));
     }
 
     private void addToppings(UUID orderId) {
@@ -160,14 +178,14 @@ public final class ShopKiosk {
             if (topping.isEmpty()) {
                 return;
             }
-            shop.addIngredient(orderId, resolveTopping(topping));
+            disciple.addIngredient(orderId, resolveTopping(topping));
         }
     }
 
     private String resolveTopping(String topping) {
         try {
             int index = Integer.parseInt(topping);
-            List<String> menu = shop.listMenu();
+            List<String> menu = disciple.listMenu();
             if (index < 1 || index > menu.size()) {
                 throw new IllegalArgumentException("No ingredient #" + index);
             }
@@ -182,7 +200,8 @@ public final class ShopKiosk {
         if (selected.isEmpty()) {
             return;
         }
-        List<String> pancakes = shop.viewOrder(selected.get());
+        UUID orderId = selected.get();
+        List<String> pancakes = disciple.viewOrder(orderId);
         if (pancakes.isEmpty()) {
             board.notice("Nothing to remove");
             return;
@@ -193,8 +212,8 @@ public final class ShopKiosk {
             throw new IllegalArgumentException("No pancake #" + which);
         }
         int count = readInt("How many to remove: ");
-        shop.removePancakes(pancakes.get(which - 1), selected.get(), count);
-        board.items("Updated order", shop.viewOrder(selected.get()));
+        disciple.removePancakes(pancakes.get(which - 1), orderId, count);
+        board.items("Updated order", disciple.viewOrder(orderId));
     }
 
     private void checkout() {
@@ -202,7 +221,7 @@ public final class ShopKiosk {
         if (selected.isEmpty()) {
             return;
         }
-        shop.completeOrder(selected.get());
+        disciple.completeOrder(selected.get());
         board.success("Sent to the kitchen");
     }
 
@@ -211,7 +230,7 @@ public final class ShopKiosk {
         if (selected.isEmpty()) {
             return;
         }
-        shop.cancelOrder(selected.get());
+        disciple.cancelOrder(selected.get());
         board.success("Order cancelled");
     }
 
@@ -220,7 +239,7 @@ public final class ShopKiosk {
         if (selected.isEmpty()) {
             return;
         }
-        shop.prepareOrder(selected.get());
+        kitchen.prepareOrder(selected.get());
         board.success("Ready for delivery");
     }
 
@@ -229,7 +248,7 @@ public final class ShopKiosk {
         if (selected.isEmpty()) {
             return;
         }
-        board.delivery(shop.deliverOrder(selected.get()));
+        board.delivery(delivery.deliverOrder(selected.get()));
     }
 
     private void addIngredientToMenu() {

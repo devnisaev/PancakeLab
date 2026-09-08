@@ -1,5 +1,5 @@
 ---
-description: Java design conventions for test-app-revolut3
+description: Java design conventions for PancakeLab
 globs: **/*.java
 alwaysApply: false
 ---
@@ -11,7 +11,7 @@ alwaysApply: false
 - Prefer composition over inheritance
 - No unnecessary abstractions (no interfaces unless required)
 - Keep methods under 20 lines
-- Use Java 21 records for value objects — not Lombok
+- Use Java 17 records for value objects — not Lombok
 
 ## Thread safety
 

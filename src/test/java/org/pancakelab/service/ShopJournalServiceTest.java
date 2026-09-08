@@ -1,7 +1,7 @@
 package org.pancakelab.service;
 
 import org.junit.jupiter.api.Test;
-import org.pancakelab.domain.BuildingRegistry;
+import org.pancakelab.domain.AddressRegistry;
 import org.pancakelab.domain.IngredientCatalog;
 import org.pancakelab.domain.OrderEvent;
 import org.pancakelab.exception.UnknownIngredientException;
@@ -53,7 +53,7 @@ class ShopJournalServiceTest {
 
     private static PancakeService shop(BoundedShopJournal journal) {
         return new PancakeService(
-                BuildingRegistry.dojoCampus(),
+                AddressRegistry.dojoCampus(),
                 IngredientCatalog.standard(),
                 new InMemoryOrderRepository(),
                 journal);

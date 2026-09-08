@@ -1,0 +1,93 @@
+@startuml
+title Pancake Lab - Patterns and DDD Building Blocks
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+package "Domain-Driven Design" #FDEDF8 {
+  class "Order" <<AggregateRoot>>
+  class Address <<ValueObject>>
+  class Ingredient <<ValueObject>>
+  class AddressRegistry <<DomainService>>
+  class IngredientCatalog <<DomainService>>
+  interface OrderRepository <<Repository>>
+  interface OrderEvent <<DomainEvent>>
+}
+
+package "Application layer" #FFF8E8 {
+  class PancakeService <<ApplicationService>>
+}
+
+package "Structural patterns" #E8FDE8 {
+  class CompositeOrderEventListener <<composite>>
+  interface OrderEventListener
+  interface ShopJournal <<strategy>>
+  class SystemShopJournal
+  class BoundedShopJournal
+}
+
+package "API / integration" #E8F4FD {
+  interface DiscipleOrders <<RolePort>>
+  interface Kitchen <<RolePort>>
+  interface DeliveryDesk <<RolePort>>
+  class OrderTicket <<DTO>>
+  class DeliveryResult <<DTO>>
+}
+
+package "Concurrency" #F0F0F0 {
+  class InMemoryOrderRepository
+}
+
+"Order" *-- Address
+"Order" *-- Ingredient : via Pancake
+PancakeService --> OrderRepository
+PancakeService --> "Order"
+PancakeService --> OrderEventListener
+CompositeOrderEventListener ..|> OrderEventListener
+SystemShopJournal ..|> ShopJournal
+BoundedShopJournal ..|> ShopJournal
+ShopJournal --|> OrderEventListener
+PancakeService ..|> DiscipleOrders
+PancakeService ..|> Kitchen
+PancakeService ..|> DeliveryDesk
+InMemoryOrderRepository ..|> OrderRepository
+"Order" ..> OrderEvent : records
+
+note bottom of "Order"
+  Aggregate root: owns pancakes,
+  enforces lifecycle, records OrderEvent
+  volatile status + version for optimistic reads
+end note
+
+note bottom of PancakeService
+  Application service orchestrates use cases
+  and does not own business rules
+end note
+
+note bottom of InMemoryOrderRepository
+  Per-order ReentrantLock
+end note
+
+note bottom of IngredientCatalog
+  ConcurrentHashMap menu storage
+end note
+
+legend right
+  Layered architecture
+  ----
+  presentation -> api -> application -> domain
+  Partial hexagonal
+  ----
+  ports in api/domain; adapters in service/logging
+  Domain events
+  ----
+  OrderEvent + OrderEventListener
+  State machine
+  ----
+  OrderStatus.canTransitionTo()
+  Pure Java
+  ----
+  no Spring; in-memory only
+endlegend
+
+@enduml

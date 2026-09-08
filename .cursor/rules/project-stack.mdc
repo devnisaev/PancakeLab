@@ -5,11 +5,11 @@ alwaysApply: true
 
 # Project Stack
 
-Plain Java 21 Maven project. No application frameworks.
+Plain Java 17 Maven project. No application frameworks.
 
 ## Allowed
 
-- Java 21
+- Java 17
 - Maven (build)
 - JUnit 5 (test scope only)
 - In-memory data structures

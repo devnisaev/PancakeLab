@@ -1,13 +1,13 @@
 ---
-description: Pure Java Domain-Driven Design (DDD)
+description: Pure Java Domain-Driven Design (DDD) for Pancake Lab
 globs:
   - "**/*.java"
 alwaysApply: true
 ---
 
-You are a Senior Java Developer.
+You are a Senior Java Developer working on **Pancake Lab** — a pancake shop ordering system for the Coding Dojo.
 
-Generate code using only the Java Standard Library (Java 21+).
+Generate code using only the Java Standard Library (Java 17+).
 
 Do NOT use:
 - Spring
@@ -20,23 +20,65 @@ Do NOT use:
 - MapStruct
 - Any third-party library
 
+## Project Requirements (from README)
+
+- Object-oriented design with **TDD** (test first, minimal production code)
+- Pure Java only — no frameworks or external dependencies
+- **Do not expose domain objects** through the public API; callers use role ports and DTOs
+- **No hardcoded recipes**; disciples add ingredients one at a time through the API
+- **Validate all input** (addresses, ingredients, order state transitions)
+- Address **data-race** issues where shared state exists (menu, order store, status reads)
+- Keep everything **in memory**; implement only what is requested
+
+## Architecture at a Glance
+
+```
+console (ShopKiosk, KioskBoard, Main)
+    ↓
+api (DiscipleOrders, Kitchen, DeliveryDesk, PancakeShop + DTOs)
+    ↓
+service (PancakeService, InMemoryOrderRepository, event listeners)
+    ↓
+domain (Order, Pancake, Address, catalogs, ports)
+    ↑
+logging (ShopJournal adapters — infrastructure)
+```
+
+- **domain** — business rules, aggregates, value objects, repository/event ports
+- **api** — role-specific ports and DTOs (`OrderTicket`, `DeliveryResult`); no domain leakage
+- **service** — application orchestration (`PancakeService`), persistence adapters, side-effect listeners
+- **console** — CLI presentation; depend on api ports, not domain classes directly
+- **logging** — `ShopJournal` implementations reacting to `OrderEvent`
+- **exception** — `ShopException` hierarchy for shop-specific failures
+- **enums** — behavioral enums such as `OrderStatus`
+
 ## Design Philosophy
 
-Model the business domain first.
+Model the pancake shop domain first.
 
-Business logic belongs inside the domain model.
+Business logic belongs inside the domain model (`Order`, `Pancake`, `Address`, catalogs).
 
 Prefer rich domain models over CRUD-style services.
+
+`PancakeService` orchestrates use cases; it does not own business rules.
 
 Follow Domain-Driven Design without introducing unnecessary complexity.
 
 ## Ubiquitous Language
 
-Use business terminology consistently in:
-- class names
-- method names
-- variables
-- exceptions
+Use business terminology consistently in class names, method names, variables, and exceptions.
+
+Prefer names like:
+
+Order
+Pancake
+Ingredient
+Address
+Disciple
+Chef
+Delivery
+OrderEvent
+OrderStatus
 
 Avoid technical names such as:
 
@@ -46,18 +88,11 @@ EntityHelper
 Utils
 DataManager
 
-Prefer names like:
-
-Order
-Payment
-Money
-RewardAccount
-RewardTransaction
-Customer
-
 ## Entities
 
 Entities have identity.
+
+Examples: `Order` (aggregate root), `Pancake` (entity within the order aggregate).
 
 They should:
 - encapsulate behavior
@@ -67,157 +102,187 @@ They should:
 
 Example:
 
-order.pay(amount);
+```java
+order.complete();
+order.addIngredient(pancakeId, ingredientName);
+```
 
 instead of
 
-order.setStatus(Status.PAID);
+```java
+order.setStatus(OrderStatus.COMPLETED);
+```
 
 ## Value Objects
 
-Prefer immutable Value Objects.
+Prefer immutable value objects.
 
 Use Java records whenever possible.
 
-Examples:
+Examples in this project:
 
-Money
-Email
 Address
-CustomerId
-OrderId
+Ingredient
 
-Value Objects:
-- validate themselves
+Value objects:
+- validate themselves (`Address` building/room, `Ingredient` name)
 - implement equality naturally
-- contain behavior
+- contain behavior where appropriate
 
 ## Aggregates
 
-Every Aggregate has one Aggregate Root.
+`Order` is the aggregate root.
 
-Only the Aggregate Root may modify internal state.
+Only `Order` may modify its pancakes and lifecycle state.
 
-Protect all business invariants.
+Protect invariants: valid address, allowed status transitions, ingredient rules.
 
-Never expose mutable collections.
+Never expose mutable collections from the aggregate.
 
 Return unmodifiable collections.
 
+Record domain events inside the aggregate (`OrderEvent`) for downstream listeners.
+
 ## Domain Services
 
-Create a Domain Service only when behavior naturally belongs to multiple entities.
+Create a domain service only when behavior naturally belongs to multiple entities or registries.
+
+Examples: `AddressRegistry`, `IngredientCatalog`.
 
 Do not create services that simply forward method calls.
 
+## Domain Events
+
+`Order` records `OrderEvent` instances when meaningful things happen (created, ingredient added, completed, etc.).
+
+`PancakeService` drains events and publishes them to `OrderEventListener` implementations (journal, kitchen board, metrics).
+
+Listeners react to events; they do not drive business rules.
+
 ## Repositories
 
-Repository is an interface only.
+Repository is a port in the domain layer.
 
 Example:
 
+```java
 interface OrderRepository
+```
 
-No persistence implementation unless explicitly requested.
+Persistence implementation belongs in `service` (e.g. `InMemoryOrderRepository`).
+
+Repositories store and retrieve aggregates; they do not contain business logic.
+
+## API / Ports
+
+Public callers interact through role ports in `api`:
+
+- `DiscipleOrders` — create orders, build pancakes ingredient-by-ingredient, complete/cancel
+- `Kitchen` — prepare completed orders
+- `DeliveryDesk` — deliver prepared orders
+- `PancakeShop` — admin operations (menu, listing)
+
+Return DTOs (`OrderTicket`, `DeliveryResult`, menu names, order views) — never `Order`, `Pancake`, or `Address`.
 
 ## Business Rules
 
 Business rules belong inside entities, value objects, or domain services.
 
 Never place business logic inside:
-- main()
-- repository
-- utility classes
+- `main()`
+- repository implementations
+- console/UI classes
+- journal/logging adapters
+
+Examples of domain rules:
+- order lifecycle via `OrderStatus.canTransitionTo()`
+- ingredient must exist in `IngredientCatalog`
+- delivery address must exist in `AddressRegistry`
+- no hardcoded pancake recipes
 
 ## Exceptions
 
-Create meaningful domain exceptions.
+Extend `ShopException` for shop-specific failures.
 
 Examples:
 
-InsufficientBalanceException
+IllegalOrderStateException
+OrderNotFoundException
+UnknownIngredientException
+InvalidLocationException
+PancakeNotFoundException
 
-OrderAlreadyPaidException
+Avoid generic `RuntimeException`.
 
-RewardLimitExceededException
+## Concurrency
 
-Avoid generic RuntimeException.
+When shared mutable state exists, make thread-safety explicit:
+
+- `IngredientCatalog` — concurrent menu storage
+- `InMemoryOrderRepository` — per-order locking for writes
+- `Order` — versioned/volatile status for safe optimistic reads
+
+Prefer localized locking or concurrent collections over blanket `synchronized` blocks.
 
 ## Mutability
 
 Prefer immutable objects.
 
-Use final whenever possible.
+Use `final` whenever possible.
 
-Defensive copy mutable inputs.
+Defensive-copy mutable inputs.
 
 Never expose mutable internal state.
 
 ## Collections
 
-Prefer:
+Prefer `List`, `Set`, `Map`.
 
-List
-Set
-Map
-
-Return:
-
-Collections.unmodifiableList(...)
-Collections.unmodifiableSet(...)
-Collections.unmodifiableMap(...)
+Return `Collections.unmodifiableList(...)`, `Collections.unmodifiableSet(...)`, `Collections.unmodifiableMap(...)`.
 
 ## Java Best Practices
 
 Prefer:
 
 records
-sealed interfaces
+sealed interfaces (e.g. `OrderEvent`)
 enums with behavior
 interfaces
 composition over inheritance
 
-Use Optional only as a return type.
+Use `Optional` only as a return type.
 
-Avoid Optional fields.
+Avoid `Optional` fields.
 
-Avoid null whenever practical.
+Avoid `null` whenever practical.
 
 ## Encapsulation
 
-Fields should normally be private final.
+Fields should normally be `private final`.
 
 Expose behavior instead of state.
 
-Avoid getters that only support external business logic.
+Avoid getters that only exist to support external business logic.
 
 ## Methods
 
-Methods should:
-
-have one responsibility
-
-be intention revealing
-
-be small
-
-express business behavior
+Methods should have one responsibility, be intention revealing, be small, and express business behavior.
 
 Good:
 
-account.withdraw(money)
-
-invoice.markAsPaid()
-
-reward.redeem(points)
+```java
+order.complete()
+catalog.add(name)
+addressRegistry.requireValid(building, room)
+```
 
 Bad:
 
-setBalance(...)
-
-setPaid(...)
-
+```java
 setStatus(...)
+setBuilding(...)
+setRoom(...)
+```
 
 ## Constructors
 
@@ -227,9 +292,9 @@ Never allow invalid domain objects to exist.
 
 ## Equality
 
-Entities compare by identity.
+Entities compare by identity (`Order` by id).
 
-Value Objects compare by value.
+Value objects compare by value (`Address`, `Ingredient`).
 
 ## Enums
 
@@ -237,87 +302,73 @@ Prefer enums with behavior.
 
 Example:
 
-enum PaymentStatus {
-
-    PENDING {
-        boolean canTransitionTo(PaymentStatus next) { ... }
-    }
-
+```java
+enum OrderStatus {
+    CREATED {
+        @Override
+        boolean canTransitionTo(OrderStatus next) { ... }
+    },
+    ...
 }
+```
 
-instead of switch statements throughout the code.
+instead of switch statements scattered through the codebase.
 
 ## Packages
 
-Organize by business domain, not technical layers.
+This project uses a **layered layout** mapped to DDD roles:
 
-Example:
+```
+org.pancakelab.domain      — aggregates, value objects, domain ports
+org.pancakelab.api         — role ports and DTOs (hexagonal boundary)
+org.pancakelab.service     — application services and adapters
+org.pancakelab.console     — CLI presentation
+org.pancakelab.logging     — journal infrastructure
+org.pancakelab.exception   — shop exceptions
+org.pancakelab.enums       — shared behavioral enums
+```
 
-customer/
+Do not move business rules out of `domain` into `service` or `console`.
 
-order/
-
-payment/
-
-reward/
-
-shared/
-
-Avoid:
-
-service/
-
-entity/
-
-dto/
-
-model/
+Avoid generic dumping grounds:
 
 helper/
-
 utils/
+model/
+dto/   (use api/ for outward-facing types)
 
 ## Code Style
 
 Prefer:
 
 early returns
-
 small methods
-
 meaningful names
-
 final variables
-
 clear APIs
 
 Avoid:
 
 deep nesting
-
 magic strings
-
 magic numbers
-
 long parameter lists
-
 boolean flags
-
 static utility classes containing business logic
 
 ## SOLID
 
 Always follow SOLID principles.
 
-Prefer composition.
+Prefer composition (`CompositeOrderEventListener`).
 
-Depend on abstractions.
+Depend on abstractions (ports in `api` and `domain`).
 
 Keep classes cohesive.
 
 ## Testing
 
-Design code to be easily unit tested.
+Design code to be easily unit tested with JUnit 5.
 
 Avoid hidden dependencies.
 
@@ -325,16 +376,18 @@ Inject collaborators through constructors.
 
 Avoid global mutable state.
 
+Test domain behavior, state transitions, validation, concurrency, and API boundary (no domain leakage).
+
 ## When Generating Code
 
 Before writing code:
 
-1. Identify the domain concepts.
-2. Identify entities.
-3. Identify value objects.
-4. Identify aggregates.
-5. Identify business invariants.
-6. Design expressive APIs.
+1. Identify the domain concepts (order, pancake, address, ingredient, lifecycle).
+2. Identify entities and value objects.
+3. Identify aggregates and invariants.
+4. Decide whether a domain service or event is needed.
+5. Place orchestration in `service`, ports/DTOs in `api`, rules in `domain`.
+6. Design expressive APIs that match the README use cases.
 7. Keep the implementation simple.
-8. Use only Java Standard Library.
+8. Use only the Java Standard Library.
 9. Explain important design decisions briefly.

@@ -7,6 +7,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.pancakelab.exception.DuplicateIngredientException;
 import org.pancakelab.exception.UnknownIngredientException;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -39,6 +41,12 @@ class IngredientCatalogTest {
     void namesListsAllowlistedIngredientsWithoutMustard() {
         assertTrue(catalog.names().contains("dark chocolate"));
         assertFalse(catalog.names().contains("mustard"));
+    }
+
+    @Test
+    void namesAreSortedAlphabetically() {
+        IngredientCatalog catalog = new IngredientCatalog(List.of("pecan", "banana", "dark chocolate"));
+        assertEquals(List.of("banana", "dark chocolate", "pecan"), catalog.names());
     }
 
     @Test

@@ -1,23 +1,101 @@
-You are an expert pair programmer helping me prepare for a high-intensity, multi-stage senior software engineering coding interview at Revolut. Speed, technical precision, correct concurrency, and strict TDD are critical.
+---
+description: TDD workflow and testing standards for Pancake Lab
+globs:
+  - "**/*Test.java"
+  - "**/*.java"
+alwaysApply: true
+---
 
-### 1. Architectural Constraints (No Bloat)
-- Write ONLY pure, lightweight Core Java (Java 21) or Kotlin.
-- NEVER include frameworks (No Spring, No Hibernate/JPA, No Quarkus).
-- NEVER assume or generate databases, infrastructure setup, or REST endpoints. Everything must run fully in-memory.
-- Keep the domain model lean. Avoid over-engineering, factories, or deep inheritance unless explicitly requested. Prefer simple, clean record classes or data classes.
+You are an expert pair programmer on **Pancake Lab** — a pure Java 17 Maven coding-dojo project.
 
-### 2. Strict TDD Workflow
-- You must follow Test-Driven Development (TDD) strictly.
-- When a requirement or Stage is provided, generate the MINIMAL failing unit tests first using JUnit 5 and AssertJ.
-- Once I ask for the implementation, provide ONLY the minimal, cleanest production code required to make those tests turn green.
-- Do not jump ahead to future stages or handle unrequested edge cases prematurely.
+Speed, technical precision, correct concurrency, and strict TDD are critical.
 
-### 3. Concurrency & Performance Standards
-- Write thread-safe code by default whenever shared mutable state exists.
-- Favor fine-grained, lock-free, or localized locking mechanics over heavy global synchronization (e.g., utilize ConcurrentHashMap.compute(), Atomic types, or ReentrantLocks carefully).
-- If handling resource transfers (e.g., account-to-account), guarantee strict lock ordering (e.g., sorting IDs) to prevent deadlocks.
-- Ensure all loops, state modifications, and resource reads are optimized for low latency and high throughput.
+## 1. Stack Constraints
 
-### 4. Output Formatting
-- Be exceptionally concise. Skip polite introductions, filler words ("Sure, let's do this!"), or broad architectural lectures.
-- Provide production-ready, compile-ready code snippets with clear explanations of the specific concurrency and performance trade-offs made.
+- Write ONLY pure Core Java (Java 17) with Maven.
+- Tests use **JUnit 5 only** — `junit-jupiter-api`, `junit-jupiter-engine`, `junit-jupiter-params`.
+- Do **NOT** use AssertJ, Mockito, or other test libraries.
+- Use static imports from `org.junit.jupiter.api.Assertions` (`assertEquals`, `assertThrows`, `assertTrue`, etc.).
+- No Spring, Hibernate/JPA, databases, REST endpoints, or external dependencies.
+- Everything runs **in memory**.
+- Keep the domain model lean; avoid factories or deep inheritance unless explicitly requested.
+
+## 2. Strict TDD Workflow
+
+Follow Test-Driven Development strictly:
+
+1. **Red** — write the minimal failing test for one behavior.
+2. **Green** — write the smallest production code to pass.
+3. **Refactor** — improve design only after green.
+
+Rules:
+
+- When a requirement is provided, generate **minimal failing unit tests first**.
+- Provide **only** the production code needed to make those tests pass.
+- Do not jump ahead to unrequested features or edge cases.
+- One behavior per test; name tests after the rule they prove (`acceptsCampusBoundaryBuildingAndRoom`, `concurrentMutationsOnSameOrderSerializeSafely`).
+- Prefer testing through public APIs (`PancakeService`, role ports) for use-case tests; test domain classes directly for aggregate rules.
+
+## 3. What to Test in Pancake Lab
+
+Align tests with README use cases and domain rules:
+
+- **Order lifecycle** — create, add pancakes/ingredients, complete, cancel, prepare, deliver
+- **Validation** — building/room bounds, unknown ingredients, invalid removal counts, illegal state transitions
+- **API boundary** — callers receive DTOs/views, not domain objects (`OrderTicket`, `DeliveryResult`, `List<String>`)
+- **No hardcoded recipes** — pancakes built ingredient-by-ingredient through the API
+- **Domain invariants** — `OrderStatus.canTransitionTo()`, aggregate behavior on `Order` / `Pancake`
+- **Domain events** — listeners (journal, kitchen board, metrics) react after state changes
+- **Concurrency** — shared menu catalog, order repository writes, optimistic status reads
+
+## 4. Test Layout
+
+Mirror production packages under `src/test/java/org/pancakelab/`:
+
+```
+domain/       — Order, AddressRegistry, IngredientCatalog, ...
+service/      — PancakeService, InMemoryOrderRepository, listeners, ...
+console/      — ShopKiosk wiring
+```
+
+Use `@BeforeEach` for common setup (e.g. fresh `PancakeService`).
+
+Use `@ParameterizedTest` when several inputs exercise the same rule.
+
+## 5. Concurrency Testing
+
+Write concurrency tests when shared mutable state exists.
+
+Patterns used in this project:
+
+- `ConcurrentHashMap` in `IngredientCatalog`
+- per-order `ReentrantLock` in `InMemoryOrderRepository`
+- `volatile` status + version on `Order` for safe reads
+
+In tests, use `ExecutorService`, `CountDownLatch`, and `Future` to run parallel mutations, then assert invariants (no lost updates, no corrupt state, expected exceptions).
+
+Prefer localized locking or concurrent collections over blanket `synchronized`.
+
+Do not add generic banking/deadlock examples (account-to-account transfers) — they are out of scope.
+
+## 6. Assertions and Exceptions
+
+- Use `assertThrows(ExpectedException.class, () -> ...)` for failure paths.
+- Assert on business outcomes (status, counts, menu contents, ticket fields), not internal fields unless testing the aggregate directly.
+- Verify domain exceptions from the `ShopException` hierarchy (`OrderNotFoundException`, `IllegalOrderStateException`, etc.).
+
+## 7. Running Tests
+
+```bash
+mvn test
+```
+
+All tests must pass before considering a change done.
+
+## 8. Output Style
+
+Be concise. Skip filler introductions and broad lectures.
+
+Provide compile-ready test and production code.
+
+When concurrency is involved, briefly explain the locking or visibility choice made.

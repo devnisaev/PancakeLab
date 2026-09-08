@@ -1,0 +1,49 @@
+@startuml
+title Pancake Lab - Domain Events and Side Effects
+
+skinparam shadowing false
+autonumber
+
+actor Client
+participant "PancakeService\n(application)" as Service
+participant "OrderRepository" as Repo
+participant "Order\n(aggregate)" as Order
+participant "OrderEventListener\n(composite)" as Listeners
+participant "ShopJournal" as Journal
+participant "KitchenBoard" as Board
+participant "ShopMetrics" as Metrics
+
+Client -> Service : completeOrder(orderId)
+Service -> Repo : withOrder(orderId, action)
+activate Repo
+Repo -> Order : complete()
+activate Order
+Order -> Order : status = COMPLETED\nrecord(Completed event)
+Order --> Repo : drained events
+deactivate Order
+Repo --> Service : outcome + events
+deactivate Repo
+
+Service -> Listeners : handleAll(events)
+activate Listeners
+Listeners -> Journal : handle(Completed)
+Listeners -> Board : handle(Completed)
+Listeners -> Metrics : handle(Completed)
+deactivate Listeners
+
+Service --> Client : void
+
+note over Order
+  Events are recorded inside the aggregate.
+  Failed operations drain events without
+  publishing - rejected mustard is not journaled.
+end note
+
+note over Listeners
+  Observer / domain events pattern.
+  State lives on Order; events drive
+  logging, kitchen display, and metrics.
+  Not full event sourcing.
+end note
+
+@enduml

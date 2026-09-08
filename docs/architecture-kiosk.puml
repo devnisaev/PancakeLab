@@ -1,0 +1,68 @@
+@startuml
+title Pancake Lab - ShopKiosk Role Ports
+
+skinparam shadowing false
+
+state Home
+
+state "Order food\n(DiscipleOrders)" as OrderDesk {
+  state "placeOrder()" as place
+  state "addPancake()\naddIngredient()" as add
+  state "completeOrder()\ncancelOrder()" as checkout
+}
+
+state "Kitchen\n(Kitchen port)" as KitchenDesk {
+  state "prepareOrder()" as prepare
+}
+
+state "Delivery\n(DeliveryDesk port)" as DeliveryDesk {
+  state "deliverOrder()" as deliver
+}
+
+state "Menu board\n(DiscipleOrders + PancakeShop)" as MenuDesk {
+  state "listMenu()" as viewMenu
+  state "addMenuItem()" as extendMenu
+}
+
+Home --> OrderDesk : 1) Order food
+Home --> KitchenDesk : 2) Kitchen
+Home --> DeliveryDesk : 3) Delivery
+Home --> MenuDesk : 4) Menu board
+
+OrderDesk --> Home : 9) Back
+KitchenDesk --> Home : 9) Back
+DeliveryDesk --> Home : 9) Back
+MenuDesk --> Home : 9) Back
+
+note right of OrderDesk
+  <b>DiscipleOrders</b>
+  createOrder, addPancake, addIngredient,
+  viewOrder, removePancakes,
+  completeOrder, cancelOrder, listMenu
+
+  <b>PancakeShop</b> (shared board only)
+  listOrders() - pick order by #
+end note
+
+note right of KitchenDesk
+  <b>Kitchen</b>
+  prepareOrder()
+
+  <b>PancakeShop</b> (shared board)
+  listOrders() filtered by COMPLETED
+end note
+
+note right of DeliveryDesk
+  <b>DeliveryDesk</b>
+  deliverOrder()
+
+  <b>PancakeShop</b> (shared board)
+  listOrders() filtered by PREPARED
+end note
+
+note bottom of MenuDesk
+  View menu: DiscipleOrders.listMenu()
+  Add ingredient: PancakeShop.addMenuItem()
+end note
+
+@enduml

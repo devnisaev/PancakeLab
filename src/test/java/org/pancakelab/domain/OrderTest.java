@@ -19,11 +19,11 @@ class OrderTest {
 
     @BeforeEach
     void createOrder() {
-        order = new Order(BuildingRegistry.dojoCampus().require(10, 20));
+        order = new Order(AddressRegistry.dojoCampus().require(10, 20));
     }
 
     @Test
-    void startsInCreatedStatusAtGivenLocation() {
+    void startsInCreatedStatusAtGivenAddress() {
         assertEquals(OrderStatus.CREATED, order.getStatus());
         assertEquals(10, order.getBuilding());
         assertEquals(20, order.getRoom());
@@ -170,7 +170,7 @@ class OrderTest {
 
     @Test
     void equalsIsBasedOnId() {
-        Order other = new Order(BuildingRegistry.dojoCampus().require(1, 1));
+        Order other = new Order(AddressRegistry.dojoCampus().require(1, 1));
         assertTrue(order.equals(order));
         assertEquals(order.hashCode(), order.hashCode());
         assertEquals(false, order.equals(other));

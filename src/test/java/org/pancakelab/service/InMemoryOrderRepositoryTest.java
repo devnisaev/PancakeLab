@@ -2,7 +2,7 @@ package org.pancakelab.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.pancakelab.domain.BuildingRegistry;
+import org.pancakelab.domain.AddressRegistry;
 import org.pancakelab.domain.Order;
 import org.pancakelab.domain.OrderRepository;
 import org.pancakelab.enums.OrderStatus;
@@ -23,7 +23,7 @@ class InMemoryOrderRepositoryTest {
     @BeforeEach
     void createRepository() {
         orders = new InMemoryOrderRepository();
-        order = new Order(BuildingRegistry.dojoCampus().require(1, 1));
+        order = new Order(AddressRegistry.dojoCampus().require(1, 1));
         orders.save(order);
     }
 

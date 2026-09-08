@@ -40,6 +40,9 @@ package "org.pancakelab.logging" {
 package "org.pancakelab.service" {
   class PancakeService
   class InMemoryOrderRepository
+  class CompositeOrderEventListener
+  class KitchenBoard
+  class ShopMetrics
 }
 
 package "org.pancakelab.exception" {
@@ -88,32 +91,42 @@ package "org.pancakelab.domain" {
     + description(): String
   }
   class Ingredient
-  class Location
+  class Address
+  class AddressRegistry {
+    + require(building, room): Address
+    + hasBuilding(building): boolean
+    + buildings(): Set<Integer>
+  }
   class IngredientCatalog
-  class BuildingRegistry
-  sealed interface OrderEvent
+  interface OrderEvent <<sealed>>
+  interface OrderEventListener
 }
 
 PancakeShop --|> DiscipleOrders
 PancakeShop --|> Kitchen
 PancakeShop --|> DeliveryDesk
 PancakeService ..|> PancakeShop
+PancakeService --> OrderEventListener
 PancakeService --> OrderRepository
 PancakeService --> IngredientCatalog
-PancakeService --> BuildingRegistry
-PancakeService --> ShopJournal
+PancakeService --> AddressRegistry
+CompositeOrderEventListener ..|> OrderEventListener
+KitchenBoard ..|> OrderEventListener
+ShopMetrics ..|> OrderEventListener
+ShopJournal --|> OrderEventListener
 InMemoryOrderRepository ..|> OrderRepository
 SystemShopJournal ..|> ShopJournal
 BoundedShopJournal ..|> ShopJournal
 DiscardingShopJournal ..|> ShopJournal
 Order ..> OrderEvent : records
+OrderEventListener ..> OrderEvent : handle
 PancakeShop ..> DeliveryResult : returns
 Order *-- Pancake
-Order *-- Location
+Order *-- Address
 Order --> OrderStatus
 Pancake *-- Ingredient
 IngredientCatalog ..> Ingredient : allowlists
-BuildingRegistry ..> Location : validates
+AddressRegistry ..> Address : validates
 PancakeService ..> InvalidLocationException
 PancakeService ..> UnknownIngredientException
 OrderRepository ..> OrderNotFoundException

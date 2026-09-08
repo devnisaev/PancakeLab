@@ -3,59 +3,60 @@ package org.pancakelab.service;
 import org.pancakelab.api.DeliveryResult;
 import org.pancakelab.api.OrderTicket;
 import org.pancakelab.api.PancakeShop;
-import org.pancakelab.domain.BuildingRegistry;
-import org.pancakelab.domain.Ingredient;
-import org.pancakelab.domain.IngredientCatalog;
-import org.pancakelab.domain.Location;
-import org.pancakelab.domain.Order;
-import org.pancakelab.domain.OrderEvent;
-import org.pancakelab.domain.OrderRepository;
+import org.pancakelab.domain.*;
 import org.pancakelab.enums.OrderStatus;
 import org.pancakelab.exception.OrderNotFoundException;
-import org.pancakelab.logging.DiscardingShopJournal;
 import org.pancakelab.logging.ShopJournal;
 import org.pancakelab.logging.SystemShopJournal;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 public class PancakeService implements PancakeShop {
     private final OrderRepository orders;
-    private final BuildingRegistry buildings;
+    private final AddressRegistry addresses;
     private final IngredientCatalog ingredients;
-    private final ShopJournal journal;
+    private final OrderEventListener listeners;
 
     public PancakeService() {
-        this(BuildingRegistry.dojoCampus(), IngredientCatalog.standard());
+        this(AddressRegistry.dojoCampus(), IngredientCatalog.standard());
+    }
+
+    PancakeService(AddressRegistry addresses, IngredientCatalog ingredients) {
+        this(addresses, ingredients, new InMemoryOrderRepository());
+    }
+
+    PancakeService(AddressRegistry addresses, IngredientCatalog ingredients, OrderRepository orders) {
+        this(addresses, ingredients, orders, OrderEventListener.IGNORING);
+    }
+
+    PancakeService(AddressRegistry addresses, IngredientCatalog ingredients, OrderRepository orders, ShopJournal journal) {
+        this(addresses, ingredients, orders, (OrderEventListener) journal);
+    }
+
+    PancakeService(
+            AddressRegistry addresses,
+            IngredientCatalog ingredients,
+            OrderRepository orders,
+            OrderEventListener listeners) {
+        this.addresses = Objects.requireNonNull(addresses, "addresses");
+        this.ingredients = Objects.requireNonNull(ingredients, "ingredients");
+        this.orders = Objects.requireNonNull(orders, "orders");
+        this.listeners = Objects.requireNonNull(listeners, "listeners");
     }
 
     public static PancakeService logged() {
         return new PancakeService(
-                BuildingRegistry.dojoCampus(),
+                AddressRegistry.dojoCampus(),
                 IngredientCatalog.standard(),
                 new InMemoryOrderRepository(),
                 new SystemShopJournal());
     }
 
-    PancakeService(BuildingRegistry buildings, IngredientCatalog ingredients) {
-        this(buildings, ingredients, new InMemoryOrderRepository());
-    }
-
-    PancakeService(BuildingRegistry buildings, IngredientCatalog ingredients, OrderRepository orders) {
-        this(buildings, ingredients, orders, DiscardingShopJournal.INSTANCE);
-    }
-
-    PancakeService(
-            BuildingRegistry buildings, IngredientCatalog ingredients, OrderRepository orders, ShopJournal journal) {
-        this.buildings = Objects.requireNonNull(buildings, "buildings");
-        this.ingredients = Objects.requireNonNull(ingredients, "ingredients");
-        this.orders = Objects.requireNonNull(orders, "orders");
-        this.journal = Objects.requireNonNull(journal, "journal");
+    private static Comparator<OrderTicket> ticketOrder() {
+        return Comparator.comparingInt(OrderTicket::building)
+                .thenComparingInt(OrderTicket::room)
+                .thenComparing(OrderTicket::orderId);
     }
 
     @Override
@@ -65,10 +66,10 @@ public class PancakeService implements PancakeShop {
 
     @Override
     public UUID createOrder(int building, int room) {
-        Location location = buildings.require(building, room);
-        Order order = new Order(location);
+        Address address = addresses.require(building, room);
+        Order order = new Order(address);
         orders.save(order);
-        journal.recordAll(order.drainEvents());
+        listeners.handleAll(order.drainEvents());
         return order.getId();
     }
 
@@ -162,12 +163,6 @@ public class PancakeService implements PancakeShop {
         ingredients.add(ingredient);
     }
 
-    private static Comparator<OrderTicket> ticketOrder() {
-        return Comparator.comparingInt(OrderTicket::building)
-                .thenComparingInt(OrderTicket::room)
-                .thenComparing(OrderTicket::orderId);
-    }
-
     private Optional<OrderTicket> ticketOrGone(UUID orderId) {
         try {
             return Optional.of(orders.withOrder(orderId, this::ticket));
@@ -203,7 +198,7 @@ public class PancakeService implements PancakeShop {
     }
 
     private <T> T publish(Outcome<T> outcome) {
-        journal.recordAll(outcome.events());
+        listeners.handleAll(outcome.events());
         return outcome.value();
     }
 

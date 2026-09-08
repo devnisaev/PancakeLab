@@ -13,37 +13,37 @@ import java.util.UUID;
 
 public final class Order {
     private final UUID id;
-    private final Location location;
+    private final Address address;
     private final List<Pancake> pancakes = new ArrayList<>();
     private volatile OrderStatus status = OrderStatus.CREATED;
     private volatile int version;
     private int nextPancakeId = 0;
     private final List<OrderEvent> events = new ArrayList<>();
 
-    public Order(Location location) {
-        this(UUID.randomUUID(), location);
+    public Order(Address address) {
+        this(UUID.randomUUID(), address);
     }
 
-    Order(UUID id, Location location) {
+    Order(UUID id, Address address) {
         this.id = Objects.requireNonNull(id, "id");
-        this.location = Objects.requireNonNull(location, "location");
-        events.add(new OrderEvent.Created(id, location.building(), location.room(), 0, 0));
+        this.address = Objects.requireNonNull(address, "address");
+        events.add(new OrderEvent.Created(id, address.building(), address.room(), 0, 0));
     }
 
     public UUID getId() {
         return id;
     }
 
-    public Location getLocation() {
-        return location;
+    public Address address() {
+        return address;
     }
 
     public int getBuilding() {
-        return location.building();
+        return address.building();
     }
 
     public int getRoom() {
-        return location.room();
+        return address.room();
     }
 
     public OrderStatus getStatus() {
