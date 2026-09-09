@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.pancakelab.domain.OrderEvent;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,7 +24,7 @@ class ShopMetricsTest {
         metrics.handle(new OrderEvent.Created(ORDER_ID, 1, 1, 0, 0));
         metrics.handle(new OrderEvent.Completed(ORDER_ID, 1, 1, 1, 1));
         metrics.handle(new OrderEvent.Prepared(ORDER_ID, 1, 1, 1, 2));
-        metrics.handle(new OrderEvent.Delivered(ORDER_ID, 1, 1, 1, 3));
+        metrics.handle(new OrderEvent.Delivered(ORDER_ID, 1, 1, 1, 3, List.of()));
 
         assertEquals(1, metrics.ordersCreated());
         assertEquals(1, metrics.ordersCompleted());

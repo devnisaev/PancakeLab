@@ -46,6 +46,7 @@ package "Infrastructure\norg.pancakelab.logging" as infrastructure #F0F0F0 {
   class SystemShopJournal
   class BoundedShopJournal
   class DiscardingShopJournal
+  class FileOrderArchive
   class Logfmt
 }
 

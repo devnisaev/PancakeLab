@@ -103,8 +103,11 @@ class OrderTest {
         order.prepare();
         assertEquals(OrderStatus.PREPARED, order.getStatus());
 
+        order.drainEvents();
         order.markDelivered();
         assertEquals(OrderStatus.DELIVERED, order.getStatus());
+        OrderEvent.Delivered delivered = (OrderEvent.Delivered) order.drainEvents().get(0);
+        assertEquals(List.of("Delicious pancake with dark chocolate!"), delivered.pancakes());
     }
 
     @Test

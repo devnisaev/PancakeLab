@@ -34,6 +34,7 @@ package "org.pancakelab.logging" {
   class SystemShopJournal
   class BoundedShopJournal
   class DiscardingShopJournal
+  class FileOrderArchive
   class Logfmt
 }
 
@@ -111,6 +112,7 @@ CompositeOrderEventListener ..|> OrderEventListener
 KitchenBoard ..|> OrderEventListener
 ShopMetrics ..|> OrderEventListener
 ShopJournal --|> OrderEventListener
+FileOrderArchive ..|> OrderEventListener
 InMemoryOrderRepository ..|> OrderRepository
 SystemShopJournal ..|> ShopJournal
 BoundedShopJournal ..|> ShopJournal

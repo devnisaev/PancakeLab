@@ -36,6 +36,7 @@ package "Driven adapters" as adapters #F0F0F0 {
   component "InMemoryOrderRepository" as repo
   component "SystemShopJournal" as journal
   component "BoundedShopJournal" as boundedJournal
+  component "FileOrderArchive" as archive
   component "KitchenBoard" as board
   component "ShopMetrics" as metrics
   component "CompositeOrderEventListener" as composite
@@ -68,6 +69,7 @@ service --> aggregates
 portRepo <|.. repo
 portEvents <|.. composite
 portEvents <|.. journal
+portEvents <|.. archive
 portEvents <|.. board
 portEvents <|.. metrics
 

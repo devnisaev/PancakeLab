@@ -5,6 +5,7 @@ import org.pancakelab.domain.OrderEvent;
 
 import java.lang.System.Logger.Level;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,7 +18,7 @@ class LogfmtTest {
 
     @Test
     void writesStableKeyValueAuditLine() {
-        OrderEvent.Delivered event = new OrderEvent.Delivered(ORDER_ID, 10, 20, 3, 8);
+        OrderEvent.Delivered event = new OrderEvent.Delivered(ORDER_ID, 10, 20, 3, 8, List.of());
 
         String line = Logfmt.line(TS, "shop-thread", Level.INFO, event);
 

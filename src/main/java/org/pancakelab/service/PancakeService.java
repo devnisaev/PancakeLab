@@ -5,6 +5,7 @@ import org.pancakelab.api.OrderTicket;
 import org.pancakelab.api.PancakeShop;
 import org.pancakelab.domain.*;
 import org.pancakelab.exception.OrderNotFoundException;
+import org.pancakelab.logging.FileOrderArchive;
 import org.pancakelab.logging.SystemShopJournal;
 
 import java.util.*;
@@ -40,7 +41,9 @@ public class PancakeService implements PancakeShop {
                 AddressRegistry.dojoCampus(),
                 IngredientCatalog.standard(),
                 new InMemoryOrderRepository(),
-                new SystemShopJournal());
+                new CompositeOrderEventListener(
+                        new SystemShopJournal(),
+                        FileOrderArchive.inWorkingDirectory()));
     }
 
     private static Comparator<OrderTicket> ticketOrder() {

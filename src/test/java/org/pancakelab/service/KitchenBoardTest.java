@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.pancakelab.domain.OrderEvent;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -29,7 +30,7 @@ class KitchenBoardTest {
         assertFalse(board.awaitingPrep().contains(ORDER_ID));
         assertTrue(board.readyForDelivery().contains(ORDER_ID));
 
-        board.handle(new OrderEvent.Delivered(ORDER_ID, 1, 1, 2, 3));
+        board.handle(new OrderEvent.Delivered(ORDER_ID, 1, 1, 2, 3, List.of()));
         assertFalse(board.readyForDelivery().contains(ORDER_ID));
     }
 

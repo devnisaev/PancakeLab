@@ -1,5 +1,6 @@
 package org.pancakelab.domain;
 
+import java.util.List;
 import java.util.UUID;
 
 public sealed interface OrderEvent {
@@ -32,5 +33,11 @@ public sealed interface OrderEvent {
 
     record Cancelled(UUID orderId, int building, int room, int pancakeCount, int version) implements OrderEvent {}
 
-    record Delivered(UUID orderId, int building, int room, int pancakeCount, int version) implements OrderEvent {}
+    record Delivered(
+            UUID orderId, int building, int room, int pancakeCount, int version, List<String> pancakes)
+            implements OrderEvent {
+        public Delivered {
+            pancakes = List.copyOf(pancakes);
+        }
+    }
 }

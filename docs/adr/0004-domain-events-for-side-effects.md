@@ -13,7 +13,7 @@ Logging, kitchen boards, and metrics are not pancake invariants.
 
 - `Order` records `OrderEvent` facts and exposes `drainEvents()`.
 - `PancakeService` publishes drained events **after** the repository mutation (failed commands do not journal).
-- Listeners (`ShopJournal`, `KitchenBoard`, `ShopMetrics`) implement `OrderEventListener`.
+- Listeners (`ShopJournal`, `FileOrderArchive`, `KitchenBoard`, `ShopMetrics`) implement `OrderEventListener`.
 - Lines are logfmt via JDK `System.Logger`. A bounded journal is for tests/diagnostics, not an infinite buffer.
 
 Do not event-source the aggregate or put JUL inside `Order`.

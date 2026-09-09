@@ -144,7 +144,7 @@ public final class Order {
     public void markDelivered() {
         status = status.transitionTo(OrderStatus.DELIVERED, id);
         bumpVersion();
-        record(new OrderEvent.Delivered(id, getBuilding(), getRoom(), pancakes.size(), version));
+        record(new OrderEvent.Delivered(id, getBuilding(), getRoom(), pancakes.size(), version, pancakeDescriptions()));
     }
 
     public void cancel() {
