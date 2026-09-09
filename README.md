@@ -37,5 +37,9 @@ The Sensei has put forth some conditions:
 - possible data-race issues should also be addressed
 - documentation in the form of UML diagrams would be beneficial
 
+## Architecture
+
+Java architect choices: [docs/architect-skills.md](docs/architect-skills.md). Decisions: [docs/adr/](docs/adr/README.md). Quality: [docs/quality.md](docs/quality.md). UML: `docs/*.puml`.
+
 
 Start now your assignment and save the Dojo.
