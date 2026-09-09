@@ -2,7 +2,7 @@ package org.pancakelab.service;
 
 import org.pancakelab.domain.Order;
 import org.pancakelab.domain.OrderRepository;
-import org.pancakelab.enums.OrderStatus;
+import org.pancakelab.domain.OrderStatus;
 import org.pancakelab.exception.OrderNotFoundException;
 
 import java.util.Objects;

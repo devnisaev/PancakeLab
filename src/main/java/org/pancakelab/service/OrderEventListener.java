@@ -1,4 +1,6 @@
-package org.pancakelab.domain;
+package org.pancakelab.service;
+
+import org.pancakelab.domain.OrderEvent;
 
 import java.util.List;
 

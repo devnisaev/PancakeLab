@@ -2,7 +2,6 @@ package org.pancakelab.service;
 
 import org.junit.jupiter.api.Test;
 import org.pancakelab.domain.OrderEvent;
-import org.pancakelab.domain.OrderEventListener;
 
 import java.util.ArrayList;
 import java.util.List;

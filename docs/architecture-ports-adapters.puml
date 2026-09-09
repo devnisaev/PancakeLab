@@ -25,11 +25,11 @@ package "Ports\n(org.pancakelab.api)" as ports #E8FDE8 {
 
 package "Application core" as core #FFF8E8 {
   component "PancakeService" as service
+  interface "OrderEventListener" as portEvents
 }
 
 package "Domain ports" as domainPorts #FDEDF8 {
   interface "OrderRepository" as portRepo
-  interface "OrderEventListener" as portEvents
 }
 
 package "Driven adapters" as adapters #F0F0F0 {
@@ -83,8 +83,8 @@ note right of ports
 end note
 
 note bottom of domainPorts
-  Repository and event listener interfaces
-  live in the domain package; concrete
+  OrderRepository lives in the domain package.
+  OrderEventListener is an application port;
   adapters live in service / logging.
 end note
 

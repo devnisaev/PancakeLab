@@ -4,9 +4,7 @@ import org.pancakelab.api.DeliveryResult;
 import org.pancakelab.api.OrderTicket;
 import org.pancakelab.api.PancakeShop;
 import org.pancakelab.domain.*;
-import org.pancakelab.enums.OrderStatus;
 import org.pancakelab.exception.OrderNotFoundException;
-import org.pancakelab.logging.ShopJournal;
 import org.pancakelab.logging.SystemShopJournal;
 
 import java.util.*;
@@ -19,22 +17,14 @@ public class PancakeService implements PancakeShop {
     private final OrderEventListener listeners;
 
     public PancakeService() {
-        this(AddressRegistry.dojoCampus(), IngredientCatalog.standard());
+        this(
+                AddressRegistry.dojoCampus(),
+                IngredientCatalog.standard(),
+                new InMemoryOrderRepository(),
+                OrderEventListener.IGNORING);
     }
 
-    PancakeService(AddressRegistry addresses, IngredientCatalog ingredients) {
-        this(addresses, ingredients, new InMemoryOrderRepository());
-    }
-
-    PancakeService(AddressRegistry addresses, IngredientCatalog ingredients, OrderRepository orders) {
-        this(addresses, ingredients, orders, OrderEventListener.IGNORING);
-    }
-
-    PancakeService(AddressRegistry addresses, IngredientCatalog ingredients, OrderRepository orders, ShopJournal journal) {
-        this(addresses, ingredients, orders, (OrderEventListener) journal);
-    }
-
-    PancakeService(
+    public PancakeService(
             AddressRegistry addresses,
             IngredientCatalog ingredients,
             OrderRepository orders,

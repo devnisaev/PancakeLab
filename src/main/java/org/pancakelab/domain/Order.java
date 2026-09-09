@@ -1,6 +1,5 @@
 package org.pancakelab.domain;
 
-import org.pancakelab.enums.OrderStatus;
 import org.pancakelab.exception.IllegalOrderStateException;
 import org.pancakelab.exception.InvalidRemovalCountException;
 import org.pancakelab.exception.PancakeNotFoundException;

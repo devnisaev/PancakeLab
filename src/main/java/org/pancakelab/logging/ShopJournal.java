@@ -1,7 +1,7 @@
 package org.pancakelab.logging;
 
 import org.pancakelab.domain.OrderEvent;
-import org.pancakelab.domain.OrderEventListener;
+import org.pancakelab.service.OrderEventListener;
 
 import java.util.List;
 

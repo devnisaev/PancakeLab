@@ -26,6 +26,7 @@ package "Application\norg.pancakelab.service" as application #FFF8E8 {
   class CompositeOrderEventListener
   class KitchenBoard
   class ShopMetrics
+  interface OrderEventListener
 }
 
 package "Domain\norg.pancakelab.domain" as domain #FDEDF8 {
@@ -37,7 +38,6 @@ package "Domain\norg.pancakelab.domain" as domain #FDEDF8 {
   class IngredientCatalog <<domain service>>
   interface OrderRepository
   interface OrderEvent <<sealed>>
-  interface OrderEventListener
   enum OrderStatus
 }
 
@@ -49,7 +49,7 @@ package "Infrastructure\norg.pancakelab.logging" as infrastructure #F0F0F0 {
   class Logfmt
 }
 
-package "Cross-cutting\norg.pancakelab.exception / enums" as crosscutting #FAFAFA {
+package "Cross-cutting\norg.pancakelab.exception" as crosscutting #FAFAFA {
   class ShopException
   class InvalidLocationException
   class UnknownIngredientException

@@ -1,7 +1,5 @@
 package org.pancakelab.domain;
 
-import org.pancakelab.enums.OrderStatus;
-
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;

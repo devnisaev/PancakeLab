@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.pancakelab.domain.AddressRegistry;
 import org.pancakelab.domain.Order;
 import org.pancakelab.domain.OrderRepository;
-import org.pancakelab.enums.OrderStatus;
+import org.pancakelab.domain.OrderStatus;
 import org.pancakelab.exception.OrderNotFoundException;
 
 import java.util.Set;

@@ -1,4 +1,4 @@
-package org.pancakelab.enums;
+package org.pancakelab.domain;
 
 import org.pancakelab.exception.IllegalOrderStateException;
 

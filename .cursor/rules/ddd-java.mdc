@@ -44,13 +44,12 @@ domain (Order, Pancake, Address, catalogs, ports)
 logging (ShopJournal adapters — infrastructure)
 ```
 
-- **domain** — business rules, aggregates, value objects, repository/event ports
+- **domain** — business rules, aggregates, value objects, `OrderRepository`, `OrderEvent`
 - **api** — role-specific ports and DTOs (`OrderTicket`, `DeliveryResult`); no domain leakage
-- **service** — application orchestration (`PancakeService`), persistence adapters, side-effect listeners
+- **service** — application orchestration (`PancakeService`), persistence adapters, `OrderEventListener`
 - **console** — CLI presentation; depend on api ports, not domain classes directly
 - **logging** — `ShopJournal` implementations reacting to `OrderEvent`
 - **exception** — `ShopException` hierarchy for shop-specific failures
-- **enums** — behavioral enums such as `OrderStatus`
 
 ## Design Philosophy
 
@@ -325,7 +324,6 @@ org.pancakelab.service     — application services and adapters
 org.pancakelab.console     — CLI presentation
 org.pancakelab.logging     — journal infrastructure
 org.pancakelab.exception   — shop exceptions
-org.pancakelab.enums       — shared behavioral enums
 ```
 
 Do not move business rules out of `domain` into `service` or `console`.

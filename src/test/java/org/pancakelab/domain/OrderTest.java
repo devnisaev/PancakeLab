@@ -2,7 +2,6 @@ package org.pancakelab.domain;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.pancakelab.enums.OrderStatus;
 import org.pancakelab.exception.IllegalOrderStateException;
 import org.pancakelab.exception.PancakeNotFoundException;
 import org.pancakelab.exception.UnknownIngredientException;

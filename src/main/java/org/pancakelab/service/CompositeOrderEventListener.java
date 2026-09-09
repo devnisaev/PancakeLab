@@ -1,7 +1,6 @@
 package org.pancakelab.service;
 
 import org.pancakelab.domain.OrderEvent;
-import org.pancakelab.domain.OrderEventListener;
 
 import java.util.List;
 import java.util.Objects;

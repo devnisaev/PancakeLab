@@ -43,6 +43,7 @@ package "org.pancakelab.service" {
   class CompositeOrderEventListener
   class KitchenBoard
   class ShopMetrics
+  interface OrderEventListener
 }
 
 package "org.pancakelab.exception" {
@@ -54,18 +55,6 @@ package "org.pancakelab.exception" {
   class InvalidRemovalCountException
   class DuplicateIngredientException
   class IllegalOrderStateException
-}
-
-package "org.pancakelab.enums" {
-  enum OrderStatus {
-    CREATED
-    COMPLETED
-    PREPARED
-    DELIVERED
-    CANCELLED
-    + allowsEditing(): boolean
-    + canTransitionTo(next): boolean
-  }
 }
 
 package "org.pancakelab.domain" {
@@ -99,7 +88,15 @@ package "org.pancakelab.domain" {
   }
   class IngredientCatalog
   interface OrderEvent <<sealed>>
-  interface OrderEventListener
+  enum OrderStatus {
+    CREATED
+    COMPLETED
+    PREPARED
+    DELIVERED
+    CANCELLED
+    + allowsEditing(): boolean
+    + canTransitionTo(next): boolean
+  }
 }
 
 PancakeShop --|> DiscipleOrders
