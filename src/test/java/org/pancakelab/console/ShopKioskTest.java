@@ -90,6 +90,56 @@ class ShopKioskTest {
     }
 
     @Test
+    void completedOrderIsNotOfferedForEditing() {
+        String output = run(
+                "1",
+                "1", "1", "1",
+                "3", "1", "1", "",
+                "5", "1",
+                "3",
+                "9",
+                "0");
+        int checkout = output.indexOf("Sent to the kitchen");
+        int blocked = output.indexOf("No open orders to edit");
+        assertTrue(checkout >= 0);
+        assertTrue(blocked > checkout);
+    }
+
+    @Test
+    void completedOrderCanBeCancelledBeforeDelivery() {
+        String output = run(
+                "1",
+                "1", "1", "1",
+                "3", "1", "1", "",
+                "5", "1",
+                "6", "1",
+                "2",
+                "9",
+                "0");
+        assertTrue(output.contains("Order cancelled"));
+        assertTrue(output.contains("No active orders"));
+    }
+
+    @Test
+    void deliveredOrderIsNotListedAsActive() {
+        String output = run(
+                "1", "1", "2", "2",
+                "3", "1", "5", "",
+                "5", "1",
+                "9",
+                "2", "2", "1",
+                "9",
+                "3", "2", "1",
+                "9",
+                "1", "2",
+                "9",
+                "0");
+        assertTrue(output.contains("Out for delivery"));
+        assertFalse(output.contains("#1  SENT"));
+        assertTrue(output.contains("No active orders"));
+    }
+
+    @Test
     void roleSpecificPortsDriveEachScreen() {
         PancakeService service = new PancakeService();
         StringWriter output = new StringWriter();

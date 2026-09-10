@@ -104,11 +104,11 @@ public final class ShopKiosk {
                 "9) Back");
         switch (choice()) {
             case "1" -> placeOrder();
-            case "2" -> board.tickets(shop.listOrders());
+            case "2" -> viewActiveOrders();
             case "3" -> addPancake();
             case "4" -> removePancakes();
             case "5" -> checkout();
-            case "6" -> cancel();
+            case "6" -> cancelOrder();
             case "9" -> screen = Screen.HOME;
             default -> board.notice("Unknown choice");
         }
@@ -160,8 +160,17 @@ public final class ShopKiosk {
         board.success("Order opened  ·  building " + building + ", room " + room);
     }
 
+    private void viewActiveOrders() {
+        List<OrderTicket> active = activeOrders();
+        if (active.isEmpty()) {
+            board.notice("No active orders");
+            return;
+        }
+        board.tickets(active);
+    }
+
     private void addPancake() {
-        Optional<UUID> selected = pickOrder(shop.listOrders());
+        Optional<UUID> selected = pickOpenOrder();
         if (selected.isEmpty()) {
             return;
         }
@@ -196,7 +205,7 @@ public final class ShopKiosk {
     }
 
     private void removePancakes() {
-        Optional<UUID> selected = pickOrder(shop.listOrders());
+        Optional<UUID> selected = pickOpenOrder();
         if (selected.isEmpty()) {
             return;
         }
@@ -217,7 +226,7 @@ public final class ShopKiosk {
     }
 
     private void checkout() {
-        Optional<UUID> selected = pickOrder(shop.listOrders());
+        Optional<UUID> selected = pickOpenOrder();
         if (selected.isEmpty()) {
             return;
         }
@@ -225,8 +234,8 @@ public final class ShopKiosk {
         board.success("Sent to the kitchen");
     }
 
-    private void cancel() {
-        Optional<UUID> selected = pickOrder(shop.listOrders());
+    private void cancelOrder() {
+        Optional<UUID> selected = pickCancellableOrder();
         if (selected.isEmpty()) {
             return;
         }
@@ -288,8 +297,79 @@ public final class ShopKiosk {
         }
     }
 
+    private List<OrderTicket> activeOrders() {
+        return shop.listOrders().stream()
+                .filter(ticket -> !OrderTicketStatus.DELIVERED.matches(ticket.status()))
+                .toList();
+    }
+
+    private List<OrderTicket> openOrders() {
+        return queued(OrderTicketStatus.CREATED.label());
+    }
+
+    private List<OrderTicket> cancellableOrders() {
+        return shop.listOrders().stream()
+                .filter(ticket -> OrderTicketStatus.from(ticket.status()).cancellable())
+                .toList();
+    }
+
+    private Optional<UUID> pickOpenOrder() {
+        List<OrderTicket> open = openOrders();
+        if (open.isEmpty()) {
+            board.notice("No open orders to edit");
+            return Optional.empty();
+        }
+        return pickOrder(open);
+    }
+
+    private Optional<UUID> pickCancellableOrder() {
+        List<OrderTicket> cancellable = cancellableOrders();
+        if (cancellable.isEmpty()) {
+            board.notice("No orders can be cancelled");
+            return Optional.empty();
+        }
+        return pickOrder(cancellable);
+    }
+
     private List<OrderTicket> queued(String status) {
         return shop.listOrders().stream().filter(ticket -> ticket.status().equals(status)).toList();
+    }
+
+    private enum OrderTicketStatus {
+        CREATED("CREATED", true),
+        COMPLETED("COMPLETED", true),
+        PREPARED("PREPARED", true),
+        DELIVERED("DELIVERED", false),
+        CANCELLED("CANCELLED", false);
+
+        private final String label;
+        private final boolean cancellable;
+
+        OrderTicketStatus(String label, boolean cancellable) {
+            this.label = label;
+            this.cancellable = cancellable;
+        }
+
+        String label() {
+            return label;
+        }
+
+        boolean matches(String status) {
+            return label.equals(status);
+        }
+
+        boolean cancellable() {
+            return cancellable;
+        }
+
+        static OrderTicketStatus from(String status) {
+            for (OrderTicketStatus value : values()) {
+                if (value.matches(status)) {
+                    return value;
+                }
+            }
+            return CANCELLED;
+        }
     }
 
     private int readInt(String label) {

@@ -1,4 +1,8 @@
 /target/
 /.idea/
 .DS_Store
-/shop-log/
+
+# Runtime logs (FileOrderArchive, local Main runs)
+shop-log/
+*.log
+logs/
