@@ -7,6 +7,9 @@ package "org.pancakelab.api" {
     + listMenu(): List<String>
     + addPancake(orderId): int
     + addIngredient(orderId, ingredient)
+    + addIngredient(orderId, pancakeId, ingredient)
+    + viewOrder(orderId): List<String>
+    + removePancakes(description, orderId, count)
     + completeOrder(orderId)
     + cancelOrder(orderId)
   }
@@ -71,9 +74,12 @@ package "org.pancakelab.domain" {
     - status: OrderStatus
     + addPancake(): int
     + addIngredient(pancakeId, ingredient)
+    + removePancakes(description, count): int
     + complete()
     + prepare()
+    + markDelivered()
     + cancel()
+    + drainEvents(): List<OrderEvent>
   }
   class Pancake {
     - id: int
@@ -147,7 +153,9 @@ end note
 
 note right of OrderStatus
   Lifecycle rules live on the enum.
-  Only CREATED allows pancake edits.
+  Only CREATED allows pancake edits (add/remove).
+  Cancel allowed until DELIVERED.
+  Cancelled and delivered orders are removed from the store.
 end note
 
 @enduml

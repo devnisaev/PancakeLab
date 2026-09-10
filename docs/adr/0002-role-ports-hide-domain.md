@@ -22,8 +22,17 @@ Return only `UUID`, `List<String>`, `OrderTicket`, and `DeliveryResult`. Never `
 
 `ShopKiosk` depends on those ports, not on domain classes.
 
+Presentation filters `listOrders()` by status before prompting:
+
+- view: active tickets (not `DELIVERED`)
+- add / remove / checkout: `CREATED` only
+- cancel: `CREATED`, `COMPLETED`, or `PREPARED` (until delivery)
+
+Domain rules remain the backstop if a port is called directly.
+
 ## Consequences
 
 - Chef cannot “accidentally” add mustard through the kitchen port.
+- Disciples are not prompted to edit tickets already sent to the kitchen.
 - A future HTTP adapter can implement the same ports.
 - `PancakeService` still implements all roles — ISP is for callers, not a microservice split.

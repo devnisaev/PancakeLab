@@ -16,4 +16,20 @@ PREPARED --> CANCELLED : cancelOrder
 CANCELLED --> [*] : removed from store
 DELIVERED --> [*] : removed from store
 
+note right of CREATED
+  allowsEditing() = true
+  addPancake, addIngredient, removePancakes
+end note
+
+note right of COMPLETED
+  Kitchen queue; disciple can still cancel
+  until the order leaves the shop
+end note
+
+note bottom
+  ShopKiosk filters pick lists by status so
+  disciples do not edit completed tickets.
+  Domain still enforces rules if API is called directly.
+end note
+
 @enduml

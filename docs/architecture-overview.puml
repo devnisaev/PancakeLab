@@ -43,6 +43,7 @@ package "Infrastructure\norg.pancakelab.logging" as infrastructure #F0F0F0 {
   [ShopJournal]
   [SystemShopJournal]
   [BoundedShopJournal]
+  [FileOrderArchive]
 }
 
 presentation -down-> api

@@ -10,3 +10,4 @@ Format: context → decision → consequences. Status is **Accepted** unless not
 | [0004](0004-domain-events-for-side-effects.md) | Domain events instead of logging inside `Order` |
 | [0005](0005-catalog-not-pancake-builders.md) | Incremental toppings; no pancake builders |
 | [0006](0006-file-order-archive.md) | File logs and delivery statements for finished orders |
+| [0007](0007-status-aware-kiosk.md) | Status-filtered pick lists on the disciple order desk |

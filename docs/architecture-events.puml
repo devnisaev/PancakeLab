@@ -44,6 +44,12 @@ note over Listeners
   State lives on Order; events drive
   logging, kitchen display, and metrics.
   Not full event sourcing.
+
+  <b>Main</b> (PancakeService.logged):
+  SystemShopJournal + FileOrderArchive.
+
+  <b>Tests</b> may also wire KitchenBoard,
+  ShopMetrics, or BoundedShopJournal.
 end note
 
 @enduml

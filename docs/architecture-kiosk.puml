@@ -40,8 +40,13 @@ note right of OrderDesk
   viewOrder, removePancakes,
   completeOrder, cancelOrder, listMenu
 
-  <b>PancakeShop</b> (shared board only)
-  listOrders() - pick order by #
+  <b>PancakeShop</b> (status-filtered pick lists)
+  View orders: active only (not DELIVERED)
+  Add / remove / checkout: CREATED only
+  Cancel: CREATED, COMPLETED, PREPARED
+  (cancel until delivery; domain blocks DELIVERED)
+
+  Empty lists show a notice instead of a misleading pick prompt.
 end note
 
 note right of KitchenDesk

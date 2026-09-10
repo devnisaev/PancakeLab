@@ -12,6 +12,7 @@ What this kata **optimizes**, what it **ignores**, and which README incidents th
 | Thread safety per order | Required | Per-order lock in `InMemoryOrderRepository`; `volatile` status/version on `Order` |
 | Failed commands stay silent | Required | Events drain only after a successful mutation |
 | Clarity of shop failures | Required | `ShopException` for rules; `IAE` / `NPE` for wiring |
+| Status-aware disciple UI | Required | `ShopKiosk` filters pick lists: edit on `CREATED` only; cancel until delivery; hide delivered from active view |
 
 ## What we ignore
 
@@ -35,6 +36,7 @@ Architects are scored on this trade-off, not on adding Redis.
 | Missing pancakes / lost updates | Aggregate lock on writes; stable pancake ids |
 | Cancelled or delivered still in the “DB” | `take()` mutates then removes the row |
 | Illegal kitchen or delivery steps | `OrderStatus` refuses the transition → `IllegalOrderStateException` |
+| Editing a ticket already in the kitchen | Domain `requireOpen()`; kiosk only lists `CREATED` for add/remove/checkout |
 | Shop error looking like a crash (or the reverse) | Kiosk prints `!` for `ShopException`; `NPE` still aborts |
 
 ## What we will not do

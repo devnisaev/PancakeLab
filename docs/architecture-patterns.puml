@@ -24,6 +24,7 @@ package "Structural patterns" #E8FDE8 {
   interface ShopJournal <<strategy>>
   class SystemShopJournal
   class BoundedShopJournal
+  class FileOrderArchive
 }
 
 package "API / integration" #E8F4FD {
@@ -46,6 +47,7 @@ PancakeService --> OrderEventListener
 CompositeOrderEventListener ..|> OrderEventListener
 SystemShopJournal ..|> ShopJournal
 BoundedShopJournal ..|> ShopJournal
+FileOrderArchive ..|> OrderEventListener
 ShopJournal --|> OrderEventListener
 PancakeService ..|> DiscipleOrders
 PancakeService ..|> Kitchen

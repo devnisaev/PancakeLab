@@ -29,6 +29,7 @@ Decisions: [Architecture Decision Records](adr/README.md). Quality: [quality att
 | **YAGNI / simplicity** | No Spring, no DB, no CQRS, no event store. | Architect skill is *stopping*. |
 | **TDD as design** | Tests first; production stays the minimum that stays green. | Design is forced by behaviour, not by diagrams. |
 | **Presentation vs domain** | `KioskBoard` formats receipts; domain still says `Delicious pancake with …!`. | UI can be handsome without polluting the model. |
+| **Status-aware presentation** | `ShopKiosk` filters pick lists by ticket status; domain enforces the same rules. | Console guides disciples; API stays honest if called without the kiosk. |
 
 ## Skills worth adding next (docs, not more code)
 
@@ -46,21 +47,6 @@ What *would* change if this left the kata:
 - `ShopJournal` → JSON lines / OpenTelemetry without touching `Order`
 
 That is the payoff of ports: **replace adapters, keep the aggregate**.
-
-## Cursor skills (optional, separate from `docs/`)
-
-`docs/` is for humans and reviews. Agent skills live in `.cursor/skills/` and fire when coding.
-
-Useful project skills, if we add them later:
-
-| Skill | When it should run |
-|---|---|
-| `pancake-lab-architect` | Changing packages, ports, or persistence |
-| `ddd-review` | PR-style review: aggregate boundaries, no domain leak |
-| `concurrency-review` | Touches `OrderRepository` or shared maps |
-| `adr-writer` | User asks “why did we…” or makes a structural choice |
-
-Rules already cover day-to-day DDD/TDD (`.cursor/rules/`). Skills should encode **review checklists**, not repeat “use Java 17”.
 
 ## How to talk about this in an interview
 
